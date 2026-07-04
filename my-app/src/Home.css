@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* This acts as a brick wall against browser scrollbars */
+  font-family: inherit; /* Keeps your existing font */
+}
+
+:root {
+  --navy: #2F4156;
+  --teal: #567C8D;
+  --beige: #F5EFEB;
+  --skyblue: #C8D9E6;
+  --white: #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Full-screen reset — kills the black bars caused by default body/#root sizing */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: var(--beige);
+}
+
+.home {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--beige);
+  font-family: 'Inter', sans-serif;
+  color: var(--navy);
+}
+
+/* Navbar */
+.navbar {
+  background: var(--navy);
+  padding: 18px 48px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--white);
+  background: var(--teal);
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.brand-name {
+  color: var(--white);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+/* Hero */
+.hero {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  /* CHANGE: Use 'stretch' so the left side goes from top to bottom */
+  align-items: stretch; 
+  padding: 1.5rem 4rem; /* Reduced top/bottom padding slightly */
+  height: calc(100vh - 70px); 
+  max-height: calc(100vh - 70px);
+  overflow: hidden;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--teal);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hero-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Creates the space between bullets and footer */
+  height: 100%;
+  padding: 0.5rem 2rem 0.5rem 0;
+}
+
+.hero-info > div:first-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.hero-info h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 40px;
+  line-height: 1.15;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--navy);
+}
+
+.hero-footer {
+  width: 85%; 
+  margin: 16px auto 0; 
+  align-items: center;  
+  border-top: 1px solid var(--skyblue);
+  padding-top: 12px;
+  font-size: 12px;
+  color: #7a8a94;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0; /* Prevents the screen from cutting off your names! */
+}
+
+.hero-footer .footer-top {
+  display: flex;
+  gap: 8px;
+  font-weight: 500;
+  color: var(--navy);
+}
+
+.hero-footer .footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.hero-footer a {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.hero-footer a:hover {
+  text-decoration: underline;
+  color: var(--navy);
+}
+
+.accent {
+  color: var(--teal);
+}
+
+.hero-copy {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: #4c5c68;
+  max-width: 440px;
+  margin-bottom: 36px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Update these classes in your CSS file to fix the alignment */
+
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 10px; /* Controls the exact space between dot and text */
+}
+
+.feature-list strong, 
+.feature-list p {
+  text-align: left;
+  margin-left: 0;
+}
+
+.feature-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.feature-dot.navy { background: var(--navy); }
+.feature-dot.teal { background: var(--teal); }
+.feature-dot.skyblue { background: var(--skyblue); border: 1px solid var(--teal); }
+
+.feature-list strong {
+  font-size: 14.5px;
+  color: var(--navy);
+}
+
+.feature-list p {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  color: #62727d;
+}
+
+/* Login card */
+.login-card {
+  background: var(--white);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(47, 65, 86, 0.15);
+  align-self: center;
+  margin: auto 0;
+  width: 100%;
+  max-width: 480px; /* Ensures optimal width on wider screens */
+}
+
+.card-strip {
+  height: 10px;
+  width: 100%;
+  transition: background 0.25s ease;
+}
+
+.card-strip.faculty { background: var(--teal); }
+.card-strip.student { background: var(--skyblue); }
+
+.card-body {
+  padding: 44px 40px 38px; 
+}
+
+.role-tabs {
+  display: flex;
+  background: var(--beige);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 28px;
+}
+
+.role-tab {
+  flex: 1;
+  padding: 11px 0;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--teal);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-tab.active {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.login-card h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: var(--navy);
+}
+
+.card-subtext {
+  font-size: 13px;
+  color: #7a8a94;
+  margin: 0 0 24px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-form input {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 13px 14px;
+  border: 1.5px solid var(--skyblue);
+  border-radius: 8px;
+  outline: none;
+  color: var(--navy);
+  transition: border-color 0.2s ease;
+  background-color: var(--white);
+}
+
+.login-form input::placeholder {
+  color: #7a8a94;
+  opacity: 1;
+}
+
+.login-form input:focus {
+  border-color: var(--teal);
+}
+
+.form-error {
+  color: #c0392b;
+  font-size: 12.5px;
+  margin: -6px 0 0;
+}
+
+.form-success {
+  color: #2f7a4f;
+  font-size: 12.5px;
+  margin: -6px 0 0;
+}
+
+.submit-btn {
+  margin-top: 6px;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.submit-btn:hover {
+  background: var(--teal);
+}
+
+.card-footnote {
+  margin: 20px 0 0;
+  font-size: 11.5px;
+  color: #96a4ac;
+  text-align: center;
+}
+
+.card-footnote code {
+  background: var(--beige);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--navy);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 12px;
+  color: #7a8a94;
+  border-top: 1px solid var(--skyblue);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 40px 24px;
+  }
+
+  .hero-info h1 {
+    font-size: 32px;
+  }
+
+  .navbar {
+    padding: 16px 24px;
+  }
+}

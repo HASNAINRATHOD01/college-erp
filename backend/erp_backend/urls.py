@@ -18,6 +18,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
     path('api/', include('students.urls')),
+    path('api/', include('faculty.urls')),
+    path('api/', include('attendance.urls')),
+    path('api/', include('timetable.urls')),
+    path('api/', include('marks.urls')),
+    path('api/', include('notices.urls')),
+    path('api/', include('predictions.urls')),
 ]
 
 if settings.DEBUG:

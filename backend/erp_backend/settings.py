@@ -29,6 +29,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'students',
+    'faculty',
+    'attendance',
+    'timetable',
+    'marks',
+    'notices',
+    'predictions',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -128,8 +134,8 @@ REST_FRAMEWORK = {
 # Simple JWT
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'AUTH_HEADER_TYPES': ('Bearer',),

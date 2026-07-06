@@ -194,7 +194,6 @@ FEATURES_PATH = MODEL_DIR / 'features.pkl'
 
 joblib.dump(model,        MODEL_PATH)
 joblib.dump(FEATURE_COLS, FEATURES_PATH)
-
 print(f"\n[OK] Model saved   -> {MODEL_PATH}")
 print(f"[OK] Features saved -> {FEATURES_PATH}")
 print("\n[DONE] Training complete! You can now use POST /api/predict/")

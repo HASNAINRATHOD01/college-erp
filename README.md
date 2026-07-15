@@ -16,7 +16,7 @@ It also includes an **AI Prediction Module** that analyzes attendance and academ
 
 | Member | Responsibility |
 |---------|---------------|
-| Hasnain Rathod | Backend Development (Django REST, PostgreSQL, AI) |
+| Backend Developer | Backend Development (Django REST, PostgreSQL, AI) |
 | Frontend Developer | React Frontend & UI |
 
 ---
@@ -36,7 +36,7 @@ It also includes an **AI Prediction Module** that analyzes attendance and academ
 - JWT Authentication
 
 ### Database
-- PostgreSQL
+-sqllite
 
 ### AI / Machine Learning
 - Pandas

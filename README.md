@@ -1,6 +1,6 @@
 # 🎓 College ERP System
 
-A modern Full Stack College ERP System built using **React**, **Django REST Framework**, **PostgreSQL**, and **Machine Learning**. The project provides a centralized platform for managing students, teachers, attendance, marks, notices, timetables, and AI-based student performance prediction.
+A modern Full Stack College ERP System built using **React**, **Django REST Framework**, **SQLLite**, and **Machine Learning**. The project provides a centralized platform for managing students, teachers, attendance, marks, notices, timetables, and AI-based student performance prediction.
 
 ---
 

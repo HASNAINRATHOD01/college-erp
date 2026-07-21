@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'marks',
     'notices',
     'predictions',
+    'assignments',
 ]
 
 AUTH_USER_MODEL = 'users.User'

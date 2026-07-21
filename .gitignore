@@ -1,9 +1,63 @@
+# Dependency directories
 node_modules/
+jspm_packages/
+web_modules/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Environments & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.local
+
+# Python files
 venv/
+.venv/
+env/
+.env/
+ENV/
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Databases
 db.sqlite3
+*.db
+*.sqlite3
+
+# Logs & temp files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# WhatsApp authentication & local integrations
+baileys_auth_info/
+baileys_auth_info_faculty/
+baileys_auth_info_student/
+twilio_whatsapp_log.json
+
+# IDEs & System files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
-build/
-dist/
+Thumbs.db

@@ -8,10 +8,12 @@ User = get_user_model()
 class StudentSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
 
     class Meta:
         model = Student
-        fields = ['id', 'user', 'username', 'email', 'roll_no', 'course', 'semester', 'department', 'admission_year']
+        fields = ['id', 'user', 'username', 'email', 'first_name', 'last_name', 'roll_no', 'course', 'semester', 'department', 'admission_year']
         read_only_fields = ['user']
 
 

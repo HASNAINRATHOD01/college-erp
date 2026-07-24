@@ -32,7 +32,7 @@ const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
 );
 
-export default function AdminDashboard({ user, onLogout }) {
+export default function AdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('tasks');
   const [collapsed, setCollapsed] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -165,7 +165,7 @@ export default function AdminDashboard({ user, onLogout }) {
 
   const handleAddFaculty = async (e) => {
     e.preventDefault();
-    const { id, name, email, dept, phone, password, subject } = facultyForm;
+    const { id, name, email, dept, password, subject } = facultyForm;
     if (!name.trim() || !email.trim()) {
       showToast('Please fill in Name and Email.');
       return;
@@ -282,7 +282,7 @@ export default function AdminDashboard({ user, onLogout }) {
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
-    const { id, name, email, dept, phone, fatherName, motherName, guardianContact, password, classAssigned } = studentForm;
+    const { id, name, email, dept, password } = studentForm;
     if (!name.trim() || !email.trim()) {
       showToast('Please fill in Name and Email.');
       return;

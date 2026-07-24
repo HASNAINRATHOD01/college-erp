@@ -63,7 +63,6 @@ export default function StudentDashboard({ user, onLogout }) {
   const [toastMessage, setToastMessage] = useState(null);
   
   // Dynamic loaders for database records
-  const [students, setStudents] = useState([]);
   const [currentStudent, setCurrentStudent] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [facultyList, setFacultyList] = useState([]);
@@ -156,6 +155,7 @@ export default function StudentDashboard({ user, onLogout }) {
 
   useEffect(() => {
     loadDatabase();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Toast utility
@@ -352,7 +352,7 @@ export default function StudentDashboard({ user, onLogout }) {
                     {getInitials(currentStudent.name)}
                   </div>
                   <div>
-                    <h2 style={{ fontSize: '20px', margin: 0, fontWeight: '600' }}>{currentStudent.name}</h2>
+                    <h2 className="student-profile-name-title" style={{ fontSize: '20px', margin: 0, fontWeight: '600' }}>{currentStudent.name}</h2>
                     <span className="std-badge std-badge-orange" style={{ marginTop: '4px' }}>
                       {currentStudent.dept}
                     </span>

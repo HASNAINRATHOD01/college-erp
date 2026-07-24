@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import { makeWASocket, useMultiFileAuthState as getMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import path from 'path';
@@ -29,7 +29,7 @@ class WhatsAppServiceInstance {
       console.log(`\n[WhatsApp - ${this.displayName}] 🔄 Initializing connection...`);
       this.status = 'connecting';
       
-      const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
+      const { state, saveCreds } = await getMultiFileAuthState(this.authDir);
 
       this.sock = makeWASocket({
         auth: state,

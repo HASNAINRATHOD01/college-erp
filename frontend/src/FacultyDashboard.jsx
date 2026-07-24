@@ -40,17 +40,6 @@ const TrashIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
 );
 
-const DownloadIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-);
-
-const GithubIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/></svg>
-);
-
-const GoogleDriveIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12H3l9 9 9-9h-6"/><path d="M12 3v9"/></svg>
-);
 
 const GIPHY_URLS = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXIxNzZxcGRnOXdrMnh1dmR1Y2g5Z2t4N3ZrMW15NXdndjB1dWFnaCZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/Wru6ObLbO61IBg7we6/giphy.gif",
@@ -170,10 +159,8 @@ export default function FacultyDashboard({ user, onLogout }) {
   };
 
   // --- Attendance State & Logic ---
-  const [selectedDept, setSelectedDept] = useState(activeFacultyProfile.dept);
-  const [selectedLecture, setSelectedLecture] = useState('Lecture 1: Core Course Syllabus');
+  const [selectedDept] = useState(activeFacultyProfile.dept);
   const [selectedClass, setSelectedClass] = useState('D1');
-  
   // Attendance records is a dictionary of { studentId: boolean (present/absent) }
   const [attendanceToggles, setAttendanceToggles] = useState({});
 
@@ -188,7 +175,7 @@ export default function FacultyDashboard({ user, onLogout }) {
       initialToggles[s.id] = true;
     });
     setAttendanceToggles(initialToggles);
-  }, [selectedClass, students]);
+  }, [selectedClass, students, deptStudents]);
 
   const handleToggleAttendance = (studentId) => {
     setAttendanceToggles(prev => ({
@@ -283,7 +270,7 @@ export default function FacultyDashboard({ user, onLogout }) {
     if (activeDetailStudent) {
       setFacultyNotesText(activeDetailStudent.facultyNotes || '');
     }
-  }, [selectedStudentId]);
+  }, [selectedStudentId, activeDetailStudent]);
 
   const handleSaveNotes = () => {
     if (!activeDetailStudent) return;
@@ -435,61 +422,13 @@ export default function FacultyDashboard({ user, onLogout }) {
     }
   ];
 
-  const handleDownloadPDF = (book) => {
-    // Generate a simple PDF representation inside a text blob and trigger browser download
-    const titleClean = book.title.replace(/[^a-zA-Z0-9]/g, '_');
-    const content = `
-=========================================
-      CAMPUZZ LIBRE DIGITAL READER
-=========================================
-Book Title: ${book.title}
-Author: ${book.author}
-Year: ${book.year}
-Department Category: ${book.cat}
------------------------------------------
-This is a verified academic copy downloaded from the LJ Engineering Department Portal.
 
-DESCRIPTION:
-${book.desc}
-
-CHAPTER LIST:
-${book.chapters.map(c => `- [${c.num}] ${c.title} (${c.pages})`).join('\n')}
-
-=========================================
-Generated on: ${new Date().toLocaleString()}
-Reference Token: CMS_LIB_${book.id}_${Date.now()}
-=========================================
-`;
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${titleClean}_academic_copy.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast(`PDF Downloaded: "${book.title}" successfully!`);
-  };
 
   // --- Cloud Sync Module State & Simulation Logic ---
-  const [terminalLines, setTerminalLines] = useState([
-    "[SYSTEM] Terminal ready. Logged in faculty profile verified.",
-    "[SYSTEM] Awaiting cloud repository action... Select note files below to sync."
-  ]);
-  const [githubConnected, setGithubConnected] = useState(false);
-  const [googleConnected, setGoogleConnected] = useState(false);
   const [showOAuthModal, setShowOAuthModal] = useState(null); // 'github' or 'google'
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncFile, setSyncFile] = useState('');
-  const [progressPercent, setProgressPercent] = useState(0);
 
-  const notesFiles = [
-    { name: "Unit_1_Introduction_to_React.pdf", size: "1.2 MB", desc: "Core frontend concepts and hooks." },
-    { name: "Sem4_Syllabus_IT_2026.docx", size: "450 KB", desc: "Course syllabus detailing subjects." },
-    { name: "Database_Lab_Manual_Final.pdf", size: "3.1 MB", desc: "SQL practical instructions and schema designs." }
-  ];
+
+
 
   const logToTerminal = (text, type = 'info') => {
     setTerminalLines(prev => [...prev, `[${type.toUpperCase()}] ${text}`]);
@@ -502,9 +441,7 @@ Reference Token: CMS_LIB_${book.id}_${Date.now()}
     }
   };
 
-  const handleConnectAccount = (platform) => {
-    setShowOAuthModal(platform);
-  };
+
 
   const confirmConnectOAuth = (usernameOrEmail) => {
     const platform = showOAuthModal;
@@ -520,53 +457,7 @@ Reference Token: CMS_LIB_${book.id}_${Date.now()}
     setShowOAuthModal(null);
   };
 
-  const handleSyncFile = (fileName, platform) => {
-    if (platform === 'github' && !githubConnected) {
-      showToast('Please connect your GitHub account first.');
-      return;
-    }
-    if (platform === 'google' && !googleConnected) {
-      showToast('Please connect your Google Drive account first.');
-      return;
-    }
-    if (isSyncing) return;
 
-    setIsSyncing(true);
-    setSyncFile(fileName);
-    setProgressPercent(0);
-
-    const platformName = platform === 'github' ? 'GitHub' : 'Google Drive';
-    logToTerminal(`Initiating backup file sync for '${fileName}' to ${platformName}...`, 'info');
-
-    let percent = 0;
-    const interval = setInterval(() => {
-      percent += 10;
-      setProgressPercent(percent);
-
-      if (percent === 30) {
-        logToTerminal(`Establishing secure SSL tunnel handshake with ${platformName} APIs...`, 'info');
-      } else if (percent === 60) {
-        logToTerminal(`Uploading payloads chunks: 1024kb block chunks transmitted. Processing files...`, 'info');
-      } else if (percent === 85) {
-        if (platform === 'github') {
-          logToTerminal(`Commit created: 'Update coursework material - [faculty sync]' | Hash: gp9f0b2. Pushing main...`, 'info');
-        } else {
-          logToTerminal(`Creating metadata links and configuring file sharing permission permissions...`, 'info');
-        }
-      }
-
-      if (percent >= 100) {
-        clearInterval(interval);
-        setIsSyncing(false);
-        if (platform === 'github') {
-          logToTerminal(`Pushed commit successfully! File available at: github.com/${githubConnected}/campuzz-notes/blob/main/${fileName}`, 'success');
-        } else {
-          logToTerminal(`File uploaded successfully to: Google Drive/${googleConnected}/Campuzz_Engineering_Notes/${fileName}`, 'success');
-        }
-        showToast(`"${fileName}" synced to ${platformName}!`);
-      }
-    }, 250);
-  };
 
   return (
     <div className="faculty-container">

@@ -2,7 +2,6 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import nodemailer from 'nodemailer'
 import { whatsappService } from './whatsappService.js'
-import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -18,7 +17,7 @@ const getRequestBody = (req) => {
     req.on('end', () => {
       try {
         resolve(JSON.parse(body));
-      } catch (e) {
+      } catch {
         resolve({});
       }
     });
@@ -42,7 +41,7 @@ export default defineConfig(({ mode }) => {
       {
         name: 'api-server',
         configureServer(server) {
-          whatsappService.initAll();
+          // whatsappService.initAll(); // Disabled to prevent QR spam in terminal
           server.middlewares.use(async (req, res, next) => {
             if (req.url === '/api/send-email' && req.method === 'POST') {
               try {

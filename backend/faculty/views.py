@@ -20,7 +20,11 @@ class FacultyViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Faculty.objects.all()
-    permission_classes = [IsAdmin]   # imported from users.permissions
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_serializer_class(self):
         """

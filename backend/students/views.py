@@ -6,7 +6,11 @@ from users.permissions import IsAdmin
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
-    permission_classes = [IsAdmin]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_serializer_class(self):
         if self.action == 'create':

@@ -4,9 +4,9 @@ import Landing from './Landing'
 import AdminDashboard from './AdminDashboard'
 import FacultyDashboard from './FacultyDashboard'
 import StudentDashboard from './StudentDashboard'
-
 function App() {
   const [user, setUser] = useState(null)
+  const [studentNotices, setStudentNotices] = useState([]);
 
 
   useEffect(() => {

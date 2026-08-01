@@ -25,10 +25,8 @@ It also includes an **AI Prediction Module** that analyzes attendance and academ
 
 ### Frontend
 - React (Vite)
-- React Router
-- Axios
-- Tailwind CSS
-- Recharts
+- Fetch API
+- Vanilla CSS
 
 ### Backend
 - Django

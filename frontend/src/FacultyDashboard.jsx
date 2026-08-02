@@ -1113,14 +1113,14 @@ export default function FacultyDashboard({ user, onLogout }) {
                       />
                       <span>Email (akshatthoriya1@gmail.com)</span>
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'not-allowed', opacity: 0.6 }} onClick={(e) => { e.preventDefault(); alert('⚠️ WhatsApp Notification Service is currently under development & undergoing Meta API maintenance. Please use Email notification.'); }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => { e.preventDefault(); alert('🚫 WhatsApp Notification Service is temporarily blocked due to API maintenance. Please use Email notification for live message delivery.'); }}>
                       <input
                         type="checkbox"
                         checked={false}
                         onChange={() => {}}
                         disabled
                       />
-                      <span>WhatsApp (Under Development 🛠️)</span>
+                      <span>WhatsApp (Temporarily Blocked 🚫)</span>
                     </label>
                   </div>
                   <button type="submit" className="fac-btn-primary">

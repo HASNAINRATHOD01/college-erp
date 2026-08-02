@@ -934,14 +934,15 @@ export default function AdminDashboard({ user, onLogout }) {
                           <span>NodeMailer (Email)</span>
                         </label>
 
-                        <label className="checkbox-container">
+                        <label className="checkbox-container" style={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={(e) => { e.preventDefault(); alert('🚫 WhatsApp Notification Service is temporarily blocked due to API maintenance. Please use Email notification for live message delivery.'); }}>
                           <input
                             type="checkbox"
-                            checked={facultyNoticeChannels.whatsapp}
-                            onChange={(e) => setFacultyNoticeChannels({ ...facultyNoticeChannels, whatsapp: e.target.checked })}
+                            checked={false}
+                            onChange={() => {}}
+                            disabled
                           />
                           <span className="custom-checkbox" />
-                          <span>WhatsApp</span>
+                          <span>WhatsApp (Temporarily Blocked 🚫)</span>
                         </label>
                       </div>
                     </div>
@@ -1212,7 +1213,7 @@ export default function AdminDashboard({ user, onLogout }) {
                                 <span>Email (akshatthoriya1@gmail.com)</span>
                               </label>
 
-                              <label className="checkbox-container" style={{ opacity: 0.6, cursor: 'not-allowed' }} onClick={(e) => { e.preventDefault(); alert('⚠️ WhatsApp Notification Service is currently under development & undergoing Meta API maintenance. Please use Email notification.'); }}>
+                              <label className="checkbox-container" style={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={(e) => { e.preventDefault(); alert('🚫 WhatsApp Notification Service is temporarily blocked due to API maintenance. Please use Email notification for live message delivery.'); }}>
                                 <input
                                   type="checkbox"
                                   checked={false}
@@ -1220,7 +1221,7 @@ export default function AdminDashboard({ user, onLogout }) {
                                   disabled
                                 />
                                 <span className="custom-checkbox" />
-                                <span>WhatsApp (Under Development 🛠️)</span>
+                                <span>WhatsApp (Temporarily Blocked 🚫)</span>
                               </label>
                             </div>
 

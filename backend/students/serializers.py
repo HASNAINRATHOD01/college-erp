@@ -11,10 +11,19 @@ class StudentSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
 
+    attendance_pct = serializers.SerializerMethodField()
+
     class Meta:
         model = Student
-        fields = ['id', 'user', 'username', 'email', 'first_name', 'last_name', 'roll_no', 'course', 'semester', 'department', 'admission_year']
+        fields = ['id', 'user', 'username', 'email', 'first_name', 'last_name', 'roll_no', 'course', 'semester', 'department', 'admission_year', 'attendance_pct']
         read_only_fields = ['user']
+
+    def get_attendance_pct(self, obj):
+        total = obj.attendance_records.count()
+        if total == 0:
+            return None
+        present = obj.attendance_records.filter(status='present').count()
+        return round((present / total) * 100, 1)
 
 
 class StudentCreateSerializer(serializers.ModelSerializer):

@@ -80,11 +80,11 @@ export default function FacultyDashboard({ user, onLogout }) {
   const [predictionHistory, setPredictionHistory] = useState([]);
 
   const activeFacultyProfile = {
-    id: user?.id || 'F101',
-    name: user?.name || user?.username || 'Dr. Arpit Trivedi',
+    id: user?.id || 'F000',
+    name: user?.name || user?.username || 'Faculty Member',
     dept: user?.dept || 'Computer Engineering',
-    email: user?.email || 'faculty@lju.edu.in',
-    subject: user?.subject || 'FSD'
+    email: user?.email || 'Not Provided',
+    subject: user?.subject || 'Not Assigned'
   };
 
   const loadData = async () => {
@@ -92,19 +92,28 @@ export default function FacultyDashboard({ user, onLogout }) {
       const apiStudents = await ApiService.getStudents();
       const apiAssignments = await ApiService.getAssignments();
 
-      setStudents(apiStudents.map(s => ({
+      const mappedStudents = apiStudents.map(s => ({
         id: String(s.id),
         name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
         email: s.email,
         dept: s.department || 'Computer Engineering',
-        phone: '9876543210',
-        fatherName: 'Suresh Patel',
-        motherName: 'N/A',
-        guardianContact: '9876543210',
-        attendance: 84,
+        phone: 'Not Provided',
+        fatherName: 'Not Provided',
+        motherName: 'Not Provided',
+        guardianContact: 'Not Provided',
+        attendance: s.attendance_pct !== null ? s.attendance_pct : null,
         username: s.username,
-        classAssigned: 'D1'
-      })));
+        classAssigned: s.course || 'D1'
+      }));
+      setStudents(mappedStudents);
+
+      const uniqueClasses = Array.from(new Set(mappedStudents.map(s => s.classAssigned))).sort();
+      if (uniqueClasses.length > 0) {
+        setAvailableClasses(uniqueClasses);
+        setSelectedClass(prev => uniqueClasses.includes(prev) ? prev : uniqueClasses[0]);
+      } else {
+        setAvailableClasses([]);
+      }
 
       setAssignments(apiAssignments.map(a => ({
         id: a.id,
@@ -160,6 +169,7 @@ export default function FacultyDashboard({ user, onLogout }) {
 
   // --- Attendance State & Logic ---
   const [selectedDept] = useState(activeFacultyProfile.dept);
+  const [availableClasses, setAvailableClasses] = useState(['D1']);
   const [selectedClass, setSelectedClass] = useState('D1');
   // Attendance records is a dictionary of { studentId: boolean (present/absent) }
   const [attendanceToggles, setAttendanceToggles] = useState({});
@@ -169,13 +179,14 @@ export default function FacultyDashboard({ user, onLogout }) {
 
   // Initialize attendance checklist toggles when class changes
   useEffect(() => {
+    const classStudents = students.filter(s => (s.classAssigned || s.class || 'D1') === selectedClass);
     const initialToggles = {};
-    deptStudents.forEach(s => {
-      // Default to true (present) to make registration faster
-      initialToggles[s.id] = true;
+    classStudents.forEach(s => {
+      // Default to false (absent) so teacher must mark them present
+      initialToggles[s.id] = false;
     });
     setAttendanceToggles(initialToggles);
-  }, [selectedClass, students, deptStudents]);
+  }, [selectedClass, students]);
 
   const handleToggleAttendance = (studentId) => {
     setAttendanceToggles(prev => ({
@@ -191,16 +202,17 @@ export default function FacultyDashboard({ user, onLogout }) {
     }
 
     try {
-      const promises = deptStudents.map(s => {
-        const isPresent = attendanceToggles[s.id] !== false;
-        return ApiService.markAttendance({
+      // Execute sequentially to prevent SQLite database locks
+      for (const s of deptStudents) {
+        const isPresent = attendanceToggles[s.id] === true;
+        await ApiService.markAttendance({
           student: parseInt(s.id, 10),
           subject: activeFacultyProfile.subject || 'FSD',
           date: new Date().toISOString().split('T')[0],
           status: isPresent ? 'present' : 'absent'
         });
-      });
-      await Promise.all(promises);
+      }
+      
       await loadData();
       showToast(`Attendance updated for ${deptStudents.length} students in Class ${selectedClass}!`);
     } catch (err) {
@@ -602,7 +614,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--fac-cardborder)', paddingBottom: '16px' }}>
                   <div>
                     <h3>Roll Call Attendance Sheet</h3>
-                    <p className="fac-card-desc" style={{ margin: 0 }}>Click squares to mark Present (Green) / Absent (Red). Hover over square for student name.</p>
+                    <p className="fac-card-desc" style={{ margin: 0 }}>Click the button next to each student to toggle their status between Present and Absent.</p>
                   </div>
                   <button 
                     className="fac-btn-secondary"
@@ -620,9 +632,9 @@ export default function FacultyDashboard({ user, onLogout }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', marginBottom: '20px', background: 'rgba(255,255,255,0.01)', padding: '14px', borderRadius: '8px', border: '1px solid var(--fac-cardborder)' }}>
                   {/* Class Selectors (D1 to D7) */}
                   <div className="fac-form-group" style={{ margin: 0, width: '100%' }}>
-                    <label style={{ fontSize: '10px', display: 'block', marginBottom: '8px' }}>Select Class Roster (D1 to D7)</label>
+                    <label style={{ fontSize: '10px', display: 'block', marginBottom: '8px' }}>Select Class Roster (D1 to D9)</label>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'].map(cls => (
+                      {availableClasses.length === 0 ? <span style={{fontSize: '12px', color: '#888'}}>No classes assigned</span> : availableClasses.map(cls => (
                         <button
                           key={cls}
                           type="button"
@@ -655,20 +667,62 @@ export default function FacultyDashboard({ user, onLogout }) {
                       Waiting for more students to take admission in this class...
                     </div>
                   ) : (
-                    <div className="attendance-squares-grid">
-                      {deptStudents.map(student => {
-                        const isPresent = attendanceToggles[student.id] !== false;
-                        return (
-                          <div 
-                            key={student.id} 
-                            className={`attendance-square ${isPresent ? 'present' : 'absent'}`}
-                            onClick={() => handleToggleAttendance(student.id)}
-                            title={`Name: ${student.name}\nStatus: ${isPresent ? 'Present' : 'Absent'}\nAttendance: ${student.attendance !== null ? `${student.attendance}%` : 'N/A'}`}
-                          >
-                            {student.id}
-                          </div>
-                        );
-                      })}
+                    <div style={{ overflowX: 'auto', width: '100%' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--fac-text-primary)' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--fac-cardborder)' }}>
+                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Roll No</th>
+                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Student Name</th>
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Overall %</th>
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Mark Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {deptStudents.map(student => {
+                            const isPresent = attendanceToggles[student.id] === true;
+                            return (
+                              <tr key={student.id} style={{ borderBottom: '1px solid var(--fac-cardborder)' }}>
+                                <td style={{ padding: '12px', fontSize: '14px' }}>{student.username || student.id}</td>
+                                <td style={{ padding: '12px', fontSize: '14px', fontWeight: '500' }}>{student.name}</td>
+                                <td style={{ padding: '12px', textAlign: 'center', fontSize: '13px' }}>
+                                  <span style={{ 
+                                    padding: '4px 8px', 
+                                    borderRadius: '12px', 
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                    color: 'var(--fac-accent-teal)'
+                                  }}>
+                                    {student.attendance !== null ? `${student.attendance}%` : 'N/A'}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px', textAlign: 'center' }}>
+                                  <select
+                                    value={isPresent ? 'present' : 'absent'}
+                                    onChange={(e) => {
+                                      const newVal = e.target.value;
+                                      if ((newVal === 'present' && !isPresent) || (newVal === 'absent' && isPresent)) {
+                                        handleToggleAttendance(student.id);
+                                      }
+                                    }}
+                                    style={{
+                                      padding: '6px 12px',
+                                      borderRadius: '6px',
+                                      border: '1px solid var(--fac-cardborder)',
+                                      cursor: 'pointer',
+                                      backgroundColor: isPresent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                      color: isPresent ? 'var(--fac-accent-teal)' : '#ef4444',
+                                      fontWeight: '600',
+                                      width: '110px'
+                                    }}
+                                  >
+                                    <option value="present" style={{ color: '#000' }}>Present</option>
+                                    <option value="absent" style={{ color: '#000' }}>Absent</option>
+                                  </select>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
@@ -986,9 +1040,9 @@ export default function FacultyDashboard({ user, onLogout }) {
                       onChange={(e) => setSelectedPredictStudentId(e.target.value)}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--fac-cardborder)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ffffff' }}
                     >
-                      <option value="">-- Choose Student --</option>
+                      <option value="" style={{ color: '#000' }}>-- Choose Student --</option>
                       {students.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} (Roll: {s.username})</option>
+                        <option key={s.id} value={s.id} style={{ color: '#000' }}>{s.name} (Roll: {s.username})</option>
                       ))}
                     </select>
                   </div>
@@ -1007,7 +1061,7 @@ export default function FacultyDashboard({ user, onLogout }) {
               {predictionResult && (
                 <div className="fac-card animate-scale-up" style={{ margin: 0, border: '1.5px solid var(--fac-cardborder)' }}>
                   <h4 style={{ fontSize: '16px', color: '#ffffff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    📊 Assessment Report: {predictionResult.student_roll_no}
+                    📊 Assessment Report: {students.find(s => s.id === String(predictionResult.student_id))?.name || predictionResult.student_roll_no}
                   </h4>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -1073,7 +1127,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                       ) : (
                         predictionHistory.map(log => (
                           <tr key={log.id} style={{ borderBottom: '1px solid var(--fac-cardborder)' }}>
-                            <td style={{ fontWeight: '500', padding: '12px' }}>{log.student}</td>
+                            <td style={{ fontWeight: '500', padding: '12px' }}>{students.find(s => s.username === log.student)?.name || log.student}</td>
                             <td style={{ padding: '12px' }}>{log.roll_no}</td>
                             <td style={{ fontWeight: '600', padding: '12px', color: 
                               log.predicted_label === 'excellent' ? 'var(--fac-accent-teal)' :

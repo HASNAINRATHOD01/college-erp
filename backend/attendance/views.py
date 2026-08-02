@@ -13,6 +13,9 @@ from users.permissions import IsAdmin, IsFaculty
 
 from .models import Attendance
 from .serializers import AttendanceBulkUploadSerializer, AttendanceSerializer
+from faculty.models import TeacherClassAssignment
+from rest_framework.exceptions import PermissionDenied
+from django.db.models import Q
 
 
 # ---------------------------------------------------------------------------
@@ -93,9 +96,20 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             ).select_related('student__user', 'marked_by__user')
 
         # --- Faculty / Admin: return all, allow optional filters ---
-        queryset = Attendance.objects.all().select_related(
-            'student__user', 'marked_by__user'
-        )
+        if user.is_admin:
+            queryset = Attendance.objects.all().select_related(
+                'student__user', 'marked_by__user'
+            )
+        elif user.is_faculty:
+            assignments = TeacherClassAssignment.objects.filter(faculty__user=user)
+            if not assignments.exists():
+                return Attendance.objects.none()
+            query = Q()
+            for assignment in assignments:
+                query |= Q(student__course=assignment.course, student__semester=assignment.semester)
+            queryset = Attendance.objects.filter(query).select_related('student__user', 'marked_by__user')
+        else:
+            queryset = Attendance.objects.none()
 
         # Optional filter by student_id (the integer PK of the Student model)
         student_id = self.request.query_params.get('student_id')
@@ -113,27 +127,73 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date=date)
 
         return queryset
+        
+    def get_object(self):
+        obj = super().get_object()
+        user = self.request.user
+        if user.is_faculty:
+            has_access = TeacherClassAssignment.objects.filter(
+                faculty__user=user, 
+                course=obj.student.course, 
+                semester=obj.student.semester
+            ).exists()
+            if not has_access:
+                raise PermissionDenied("You do not have permission to access this attendance record.")
+        elif user.is_student:
+            if obj.student.user != user:
+                raise PermissionDenied("You do not have permission to access this attendance record.")
+        return obj
 
     # ------------------------------------------------------------------
     # Auto-set marked_by on create
     # ------------------------------------------------------------------
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         """
-        When a faculty member creates an attendance record, automatically
-        set 'marked_by' to their Faculty profile.
-        If the creator is an admin (who may not have a Faculty profile),
-        marked_by is left as None/null.
+        Custom create to perform an update_or_create (Upsert) 
+        so that faculty can change attendance dynamically without unique constraint errors.
         """
-        user = self.request.user
-        faculty_profile = None
+        student_id = request.data.get('student')
+        subject = request.data.get('subject')
+        date = request.data.get('date')
+        status_val = request.data.get('status')
+        
+        # If standard data is missing, fall back to default behavior
+        if not all([student_id, subject, date, status_val]):
+            return super().create(request, *args, **kwargs)
 
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = request.user
+        faculty_profile = None
+        
         if user.is_faculty:
-            # hasattr guard in case the faculty profile was somehow deleted
             if hasattr(user, 'faculty_profile'):
                 faculty_profile = user.faculty_profile
+            
+            has_access = TeacherClassAssignment.objects.filter(
+                faculty=faculty_profile,
+                course=student.course,
+                semester=student.semester
+            ).exists()
+            if not has_access:
+                raise PermissionDenied("You do not have permission to mark attendance for this student.")
 
-        serializer.save(marked_by=faculty_profile)
+        obj, created = Attendance.objects.update_or_create(
+            student=student,
+            subject=subject,
+            date=date,
+            defaults={
+                'status': status_val,
+                'marked_by': faculty_profile
+            }
+        )
+        
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     # ------------------------------------------------------------------
     # @action: CSV bulk-upload
@@ -241,6 +301,19 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                     'reason': f"Student with roll_no '{roll_no}' not found."
                 })
                 continue
+                
+            if request.user.is_faculty and faculty_profile:
+                has_access = TeacherClassAssignment.objects.filter(
+                    faculty=faculty_profile,
+                    course=student.course,
+                    semester=student.semester
+                ).exists()
+                if not has_access:
+                    errors.append({
+                        'row': row_num,
+                        'reason': f"No permission for student '{roll_no}' (Course: {student.course}, Sem: {student.semester})."
+                    })
+                    continue
 
             # --- Create or update the record (update_or_create uses the
             #     unique_together fields as the lookup key) ---

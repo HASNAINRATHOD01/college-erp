@@ -33,7 +33,7 @@ class ApiService {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.detail || data.message || response.statusText || 'API error');
+        throw new Error(data.error || data.detail || data.message || response.statusText || 'API error');
       }
       return data;
     } catch (error) {

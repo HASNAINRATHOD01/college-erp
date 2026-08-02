@@ -33,3 +33,16 @@ class Faculty(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.employee_id}"
+
+
+class TeacherClassAssignment(models.Model):
+    faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE, related_name='assigned_classes')
+    course = models.CharField(max_length=100)
+    semester = models.IntegerField()
+
+    class Meta:
+        unique_together = ('faculty', 'course', 'semester')
+        db_table = 'teacher_class_assignment'
+
+    def __str__(self):
+        return f"{self.faculty.user.username} -> {self.course} Sem {self.semester}"

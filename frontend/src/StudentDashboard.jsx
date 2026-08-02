@@ -94,14 +94,14 @@ export default function StudentDashboard({ user, onLogout }) {
           name: active.first_name ? `${active.first_name} ${active.last_name || ''}`.trim() : active.username,
           email: active.email,
           dept: active.department || 'Computer Engineering',
-          phone: '9876543210',
-          fatherName: 'Suresh Patel',
-          motherName: 'N/A',
-          guardianContact: '9876543210',
-          attendance: attendancePct,
+          phone: 'Not Provided',
+          fatherName: 'Not Provided',
+          motherName: 'Not Provided',
+          guardianContact: 'Not Provided',
+          attendance: active.attendance_pct !== null ? active.attendance_pct : null,
           username: active.username,
           facultyNotes: comments || '',
-          classAssigned: 'D1'
+          classAssigned: active.course || 'D1'
         });
 
         // Map marks to T1..T4
@@ -352,7 +352,7 @@ export default function StudentDashboard({ user, onLogout }) {
                     {getInitials(currentStudent.name)}
                   </div>
                   <div>
-                    <h2 className="student-profile-name-title" style={{ fontSize: '20px', margin: 0, fontWeight: '600' }}>{currentStudent.name}</h2>
+                    <h2 className="student-profile-name-title" style={{ fontSize: '20px', margin: 0, fontWeight: '600', color: '#ffffff' }}>{currentStudent.name}</h2>
                     <span className="std-badge std-badge-orange" style={{ marginTop: '4px' }}>
                       {currentStudent.dept}
                     </span>

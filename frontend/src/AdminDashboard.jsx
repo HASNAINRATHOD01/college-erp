@@ -66,13 +66,13 @@ export default function AdminDashboard({ onLogout }) {
         name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
         email: s.email,
         dept: s.department || 'Computer Engineering',
-        phone: '9876543210',
-        fatherName: 'Suresh Patel',
-        motherName: 'N/A',
-        guardianContact: '9876543210',
-        attendance: 84,
+        phone: 'Not Provided',
+        fatherName: 'Not Provided',
+        motherName: 'Not Provided',
+        guardianContact: 'Not Provided',
+        attendance: s.attendance_pct !== null ? s.attendance_pct : null,
         username: s.username,
-        classAssigned: 'D1'
+        classAssigned: s.course || 'D1'
       })));
 
       setFaculty(apiFaculty.map(f => ({
@@ -974,9 +974,9 @@ export default function AdminDashboard({ onLogout }) {
                       onChange={(e) => setSelectedPredictStudentId(e.target.value)}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--std-border)', backgroundColor: 'var(--std-cardbg)', color: 'var(--std-text-primary)' }}
                     >
-                      <option value="">-- Choose Student --</option>
+                      <option value="" style={{ color: '#000' }}>-- Choose Student --</option>
                       {students.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} (Roll: {s.username})</option>
+                        <option key={s.id} value={s.id} style={{ color: '#000' }}>{s.name} (Roll: {s.username})</option>
                       ))}
                     </select>
                   </div>

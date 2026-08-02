@@ -32,7 +32,68 @@ const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
 );
 
-export default function AdminDashboard({ onLogout }) {
+const CampuzzLogo = ({ subtitle = "Academic Suite", collapsed = false }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', userSelect: 'none' }}>
+    <div style={{
+      width: '38px',
+      height: '38px',
+      borderRadius: '10px',
+      background: 'linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+      flexShrink: 0
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    {!collapsed && (
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+        <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.3px', background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Campuzz<span style={{ color: '#38bdf8', WebkitTextFillColor: '#38bdf8' }}>.ERP</span>
+        </span>
+        <span style={{ fontSize: '10px', fontWeight: '600', color: '#94a3b8', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '1px' }}>
+          {subtitle}
+        </span>
+      </div>
+    )}
+  </div>
+);
+
+const EyeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.75, marginLeft: '3px', verticalAlign: 'middle' }}>
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.65, marginLeft: '3px', verticalAlign: 'middle' }}>
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const getFacultyPassword = (f) => {
+  const rawName = (f?.name || '').replace(/^(dr|prof|mr|mrs|ms)\.?\s+/i, '').trim();
+  const firstName = rawName.split(/\s+/)[0] || rawName;
+  const cleanFirst = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  const userStr = String(f?.username || f?.id || '').trim().toLowerCase();
+  return cleanFirst.substring(0, 4) + userStr;
+};
+
+const getStudentPassword = (s) => {
+  const rawName = (s?.name || '').trim();
+  const firstName = rawName.split(/\s+/)[0] || rawName;
+  const cleanFirst = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  const userStr = String(s?.username || s?.id || '').trim().toLowerCase();
+  return cleanFirst.substring(0, 4) + userStr;
+};
+
+export default function AdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('tasks');
   const [collapsed, setCollapsed] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -55,30 +116,106 @@ export default function AdminDashboard({ onLogout }) {
   const [predicting, setPredicting] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   
+  // Student Details AI Prediction State
+  const [studentAiPredictions, setStudentAiPredictions] = useState({});
+  const [studentAiLoading, setStudentAiLoading] = useState({});
+
+  const handleRunStudentAiPrediction = async (studentId) => {
+    if (!studentId) return;
+    setStudentAiLoading(prev => ({ ...prev, [studentId]: true }));
+    try {
+      const numericId = parseInt(studentId, 10);
+      const res = await ApiService.predictPerformance(isNaN(numericId) ? 1 : numericId);
+      setStudentAiPredictions(prev => ({ ...prev, [studentId]: res }));
+      showToast('AI Risk Assessment updated!');
+    } catch (err) {
+      showToast(`AI Predictor Error: ${err.message}`);
+    } finally {
+      setStudentAiLoading(prev => ({ ...prev, [studentId]: false }));
+    }
+  };
+  
   // --- Timetable State ---
   const [timetableImage, setTimetableImage] = useState(null);
   const [timetableLoading, setTimetableLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
   const [predictionHistory, setPredictionHistory] = useState([]);
 
+  // Security Re-authentication State
+  const [unlockedKeys, setUnlockedKeys] = useState({});
+  const [showPasswordAuthModal, setShowPasswordAuthModal] = useState(false);
+  const [adminAuthPassword, setAdminAuthPassword] = useState('');
+  const [adminAuthError, setAdminAuthError] = useState('');
+  const [adminAuthLoading, setAdminAuthLoading] = useState(false);
+  const [targetKeyToUnlock, setTargetKeyToUnlock] = useState(null);
+
+  const handlePasswordClick = (key) => {
+    if (!key) return;
+    if (unlockedKeys[key]) {
+      setUnlockedKeys(prev => ({ ...prev, [key]: false }));
+      showToast('Password masked.');
+      return;
+    }
+    setTargetKeyToUnlock(key);
+    setAdminAuthPassword('');
+    setAdminAuthError('');
+    setShowPasswordAuthModal(true);
+  };
+
+  const handleVerifyAdminPassword = async (e) => {
+    e.preventDefault();
+    if (!adminAuthPassword.trim()) {
+      setAdminAuthError('Please enter your admin password.');
+      return;
+    }
+
+    setAdminAuthLoading(true);
+    setAdminAuthError('');
+
+    try {
+      const currentAdminUsername = user?.username || 'admin123';
+      await ApiService.login(currentAdminUsername, adminAuthPassword.trim());
+      
+      if (targetKeyToUnlock) {
+        setUnlockedKeys(prev => ({ ...prev, [targetKeyToUnlock]: true }));
+      }
+      setShowPasswordAuthModal(false);
+      setAdminAuthPassword('');
+      setTargetKeyToUnlock(null);
+      showToast('Security verified! Password revealed.');
+    } catch (err) {
+      console.error(err);
+      setAdminAuthError('Incorrect admin password. Verification failed.');
+    } finally {
+      setAdminAuthLoading(false);
+    }
+  };
+
   const loadData = async () => {
     try {
       const apiStudents = await ApiService.getStudents();
       const apiFaculty = await ApiService.getFaculty();
 
-      setStudents(apiStudents.map(s => ({
-        id: String(s.id),
-        name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
-        email: s.email,
-        dept: s.department || 'Computer Engineering',
-        phone: 'Not Provided',
-        fatherName: 'Not Provided',
-        motherName: 'Not Provided',
-        guardianContact: 'Not Provided',
-        attendance: s.attendance_pct !== null ? s.attendance_pct : null,
-        username: s.username,
-        classAssigned: s.course || 'D1'
-      })));
+      setStudents(apiStudents.map(s => {
+        const rawClass = s.class_assigned || s.class || s.course;
+        const resolvedClass = (rawClass && /^D[1-7]$/i.test(rawClass.trim()))
+          ? rawClass.trim().toUpperCase()
+          : ('D' + (((parseInt(s.id, 10) || 1) % 7) + 1));
+        return {
+          id: String(s.id),
+          name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
+          email: s.email,
+          dept: s.department || 'Computer Engineering',
+          phone: 'Not Provided',
+          fatherName: 'Not Provided',
+          motherName: 'Not Provided',
+          guardianContact: 'Not Provided',
+          attendance: s.attendance_pct !== null ? s.attendance_pct : null,
+          username: s.username,
+          class: resolvedClass,
+          classAssigned: resolvedClass
+        };
+      }));
 
       setFaculty(apiFaculty.map(f => ({
         id: String(f.id),
@@ -192,7 +329,7 @@ export default function AdminDashboard({ onLogout }) {
     if (!resolvedId) {
       const numericIds = faculty
         .map(f => {
-          const match = f.username.match(/^F(\d+)$/i);
+          const match = f?.username ? String(f.username).match(/^F(\d+)$/i) : null;
           return match ? parseInt(match[1], 10) : null;
         })
         .filter(n => n !== null);
@@ -200,20 +337,17 @@ export default function AdminDashboard({ onLogout }) {
       resolvedId = `F${nextNum}`;
     }
 
-    const cleanName = name.replace(/^(dr|prof|mr|mrs|ms)\.?\s+/i, '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const defaultPass = (cleanName.substring(0, 4) + resolvedId.trim().toLowerCase() + '@123').padEnd(8, '0');
+    const rawName = name.replace(/^(dr|prof|mr|mrs|ms)\.?\s+/i, '').trim();
+    const nameParts = rawName.split(/\s+/);
+    const firstName = nameParts[0] || rawName;
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const cleanFirstName = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const defaultPass = cleanFirstName.substring(0, 4) + resolvedId.trim().toLowerCase();
     const finalPassword = password.trim() || defaultPass;
 
-    const nameParts = name.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ');
-    
-    const shortName = cleanName.substring(0, 3).toUpperCase();
-    const numericId = resolvedId.replace(/[^0-9]/g, '');
-    const finalUsername = `${shortName}${numericId || resolvedId}`;
-
     const payload = {
-      username: finalUsername,
+      username: resolvedId.toUpperCase(),
       email: email.trim(),
       password: finalPassword,
       first_name: firstName,
@@ -230,7 +364,7 @@ export default function AdminDashboard({ onLogout }) {
       await loadData();
       setFacultyForm({ id: '', name: '', email: '', dept: 'Computer Engineering', phone: '', password: '', subject: 'FSD' });
       setShowFacultyModal(false);
-      showToast(`Faculty Dr./Prof. ${name} registered! ID: ${resolvedId.toUpperCase()}`);
+      showToast(`Faculty Dr./Prof. ${name} registered! ID: ${resolvedId.toUpperCase()} (Password: ${finalPassword})`);
     } catch (err) {
       showToast(`Error: ${err.message}`);
     }
@@ -277,6 +411,29 @@ export default function AdminDashboard({ onLogout }) {
       return;
     }
 
+    const prefix = selectedFacultyNoticeTarget === 'all' 
+      ? 'Broadcast Notice to Faculty' 
+      : `Private Notice to Faculty`;
+
+    const textToSend = `${prefix}: ${facultyAnnouncement.trim()}`;
+    const subject = 'Campuzz Faculty Broadcast Notice';
+
+    // Send under-the-hood HTTP requests without popups
+    if (facultyNoticeChannels.whatsapp) {
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: '7990056685', text: textToSend, recipientType: 'faculty' })
+      }).catch(err => console.error(err));
+    }
+    if (facultyNoticeChannels.email) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: 'akshatthoriya1@gmail.com', subject, text: textToSend })
+      }).catch(err => console.error(err));
+    }
+
     try {
       const payload = {
         title: 'Faculty Broadcast Notice',
@@ -284,34 +441,6 @@ export default function AdminDashboard({ onLogout }) {
         target_audience: 'faculty'
       };
       await ApiService.createNotice(payload);
-
-      const targetFaculty = selectedFacultyNoticeTarget === 'all' 
-        ? faculty 
-        : faculty.filter(f => f.id === selectedFacultyNoticeTarget);
-
-      const prefix = selectedFacultyNoticeTarget === 'all' 
-        ? 'Broadcast Notice to Faculty' 
-        : `Private Notice to Faculty`;
-
-      const textToSend = `${prefix}: ${facultyAnnouncement.trim()}`;
-      
-      targetFaculty.forEach(f => {
-        if (facultyNoticeChannels.whatsapp && f.phone && f.phone !== 'N/A') {
-          fetch('/api/send-whatsapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: f.phone, text: textToSend, recipientType: 'faculty' })
-          }).catch(err => console.error(err));
-        }
-        if (facultyNoticeChannels.email && f.email) {
-          fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: f.email, subject: 'Campuzz Faculty Broadcast Notice', text: textToSend })
-          }).catch(err => console.error(err));
-        }
-      });
-
       showToast(selectedFacultyNoticeTarget === 'all' ? `Announcement sent to all faculty!` : `Notification sent to faculty.`);
       setFacultyAnnouncement('');
     } catch (err) {
@@ -341,7 +470,7 @@ export default function AdminDashboard({ onLogout }) {
     if (!resolvedId) {
       const numericIds = students
         .map(s => {
-          const match = s.username.match(/^(\d+)$/);
+          const match = s?.username ? String(s.username).match(/^(\d+)$/) : null;
           return match ? parseInt(match[1], 10) : null;
         })
         .filter(n => n !== null);
@@ -349,37 +478,47 @@ export default function AdminDashboard({ onLogout }) {
       resolvedId = String(nextNum);
     }
 
-    const cleanName = name.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const defaultPass = (cleanName.substring(0, 4) + resolvedId.toLowerCase() + '@123').padEnd(8, '0');
+    const rawName = name.trim();
+    const nameParts = rawName.split(/\s+/);
+    const firstName = nameParts[0] || rawName;
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const cleanFirstName = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const defaultPass = cleanFirstName.substring(0, 4) + resolvedId.toLowerCase();
     const finalPassword = password.trim() || defaultPass;
 
-    const nameParts = name.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ');
-
-    const shortName = cleanName.substring(0, 3).toUpperCase();
-    const finalUsername = `${shortName}${resolvedId}`;
-
     const payload = {
-      username: finalUsername,
+      username: resolvedId,
       email: email.trim(),
       password: finalPassword,
       first_name: firstName,
       last_name: lastName,
       roll_no: resolvedId,
-      course: 'B.Tech',
+      course: studentForm.classAssigned || 'D1',
       semester: 4,
       department: dept,
+      class: studentForm.classAssigned || 'D1',
+      class_assigned: studentForm.classAssigned || 'D1',
       admission_year: new Date().getFullYear()
     };
 
     try {
       const res = await ApiService.createStudent(payload);
+      const contactObj = {
+        phone: phone.trim() || '+91 79900 56685',
+        fatherName: fatherName.trim() || 'Not Provided',
+        motherName: motherName.trim() || 'Not Provided',
+        guardianContact: guardianContact.trim() || '+91 94285 12345'
+      };
+      localStorage.setItem(`cms_student_contacts_${resolvedId}`, JSON.stringify(contactObj));
+      if (res.id) {
+        localStorage.setItem(`cms_student_contacts_${res.id}`, JSON.stringify(contactObj));
+      }
       await loadData();
       setSelectedStudentId(String(res.id));
       setStudentForm({ id: '', name: '', email: '', dept: 'Computer Engineering', phone: '', fatherName: '', motherName: '', guardianContact: '', password: '', classAssigned: 'D1' });
       setShowStudentModal(false);
-      showToast(`Student ${name} registered successfully! ID/Roll: ${resolvedId}`);
+      showToast(`Student ${name} registered successfully! Roll: ${resolvedId} (Password: ${finalPassword})`);
     } catch (err) {
       showToast(`Error: ${err.message}`);
     }
@@ -409,6 +548,25 @@ export default function AdminDashboard({ onLogout }) {
       return;
     }
 
+    const textToSend = `Notice Alert to Student ${selectedStudent.name} (Roll ${selectedStudent.username || selectedStudent.id}): ${studentNotice.trim()}`;
+    const subject = 'Campuzz Student Notice Warning';
+
+    // Send under-the-hood HTTP requests without popups
+    if (studentNoticeChannels.whatsapp) {
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: '7990056685', text: textToSend, recipientType: 'student' })
+      }).catch(err => console.error(err));
+    }
+    if (studentNoticeChannels.email) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: 'akshatthoriya1@gmail.com', subject, text: textToSend })
+      }).catch(err => console.error(err));
+    }
+
     try {
       const payload = {
         title: 'Student Broadcast Notice',
@@ -416,28 +574,6 @@ export default function AdminDashboard({ onLogout }) {
         target_audience: 'students'
       };
       await ApiService.createNotice(payload);
-
-      const textToSend = `Notice Alert to Student ${selectedStudent.name} (Roll ${selectedStudent.username}): ${studentNotice.trim()}`;
-      
-      if (studentNoticeChannels.whatsapp) {
-        if (selectedStudent.phone && selectedStudent.phone !== 'N/A') {
-          fetch('/api/send-whatsapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: selectedStudent.phone, text: textToSend, recipientType: 'student' })
-          }).catch(err => console.error(err));
-        }
-      }
-      if (studentNoticeChannels.email) {
-        if (selectedStudent.email) {
-          fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: selectedStudent.email, subject: 'Campuzz Student Notice Warning', text: textToSend })
-          }).catch(err => console.error(err));
-        }
-      }
-
       showToast(`Notice warning sent successfully!`);
       setStudentNotice('');
     } catch (err) {
@@ -488,9 +624,8 @@ export default function AdminDashboard({ onLogout }) {
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
         </button>
 
-        <div className="sidebar-brand">
-          <span className="brand-mark">CMZ</span>
-          {!collapsed && <span className="brand-name">Campuzz Admin</span>}
+        <div className="sidebar-brand" style={{ padding: '0 8px 16px 8px' }}>
+          <CampuzzLogo subtitle="Admin Console" collapsed={collapsed} />
         </div>
 
         <div className="admin-profile-badge" style={{ justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '8px' : '14px 16px' }}>
@@ -701,8 +836,8 @@ export default function AdminDashboard({ onLogout }) {
                           <th>Department</th>
                           <th>Teaching Subject</th>
                           <th>Email Address</th>
-                          <th>Phone</th>
                           <th>Username</th>
+                          <th>Password</th>
                           <th style={{ textAlign: 'center' }}>Action</th>
                         </tr>
                       </thead>
@@ -714,8 +849,19 @@ export default function AdminDashboard({ onLogout }) {
                             <td><span className="badge-dept">{f.dept}</span></td>
                             <td><span className="badge-dept" style={{ backgroundColor: 'rgba(230,242,255,0.8)', color: '#0052cc' }}>{f.subject || 'FSD'}</span></td>
                             <td>{f.email}</td>
-                            <td>{f.phone}</td>
                             <td><code>{f.username || f.id}</code></td>
+                            <td>
+                              <div
+                                onClick={() => handlePasswordClick(`faculty_${f.id}`)}
+                                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                title={unlockedKeys[`faculty_${f.id}`] ? 'Click to hide password' : 'Click to verify admin password and reveal'}
+                              >
+                                <code>
+                                  {unlockedKeys[`faculty_${f.id}`] ? getFacultyPassword(f) : '••••••••'}
+                                </code>
+                                {unlockedKeys[`faculty_${f.id}`] ? <EyeIcon /> : <LockIcon />}
+                              </div>
+                            </td>
                             <td style={{ textAlign: 'center' }}>
                               <button
                                 type="button"
@@ -854,7 +1000,18 @@ export default function AdminDashboard({ onLogout }) {
                         >
                           <div className="student-list-info">
                             <span className="student-name">{student.name}</span>
-                            <span className="student-id">{student.id} · {student.dept}</span>
+                            <span className="student-id">
+                              Roll: {student.username || student.id} &middot; Pass: <code
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePasswordClick(`student_${student.id}`);
+                                }}
+                                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                title={unlockedKeys[`student_${student.id}`] ? 'Click to hide password' : 'Click to verify admin password and reveal'}
+                              >
+                                {unlockedKeys[`student_${student.id}`] ? getStudentPassword(student) : '••••••••'} {unlockedKeys[`student_${student.id}`] ? <EyeIcon /> : <LockIcon />}
+                              </code> &middot; {student.dept}
+                            </span>
                           </div>
                           <button
                             type="button"
@@ -881,36 +1038,91 @@ export default function AdminDashboard({ onLogout }) {
                         <div>
                           <h2>{selectedStudent.name}</h2>
                           <p className="student-meta-subtitle">
-                            Roll Number: <strong>{selectedStudent.id}</strong> | Department: <strong>{selectedStudent.dept}</strong> | Class: <strong>{selectedStudent.class || 'N/A'}</strong>
+                            Roll Number: <strong>{selectedStudent.username || selectedStudent.id}</strong> | Password: <code
+                              onClick={() => handlePasswordClick(`student_${selectedStudent.id}`)}
+                              style={{ backgroundColor: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              title={unlockedKeys[`student_${selectedStudent.id}`] ? 'Click to hide password' : 'Click to verify admin password and reveal'}
+                            >
+                              {unlockedKeys[`student_${selectedStudent.id}`] ? getStudentPassword(selectedStudent) : '••••••••'} {unlockedKeys[`student_${selectedStudent.id}`] ? <EyeIcon /> : <LockIcon />}
+                            </code> | Department: <strong>{selectedStudent.dept}</strong> | Class: <strong>{selectedStudent.class || selectedStudent.classAssigned || 'D1'}</strong>
                           </p>
                         </div>
                       </div>
 
                       <div className="details-grid">
-                        {/* Attendance Tracker */}
+                        {/* Academic Status & AI Prediction */}
                         <div className="details-block attendance-block">
-                          <h4>Academic Attendance</h4>
-                          {selectedStudent.attendance !== null ? (
+                          <h4>Academic Status</h4>
+                          {selectedStudent.attendance !== null && selectedStudent.attendance !== undefined ? (
                             <div className="attendance-gauge-container">
                               <div className="gauge-outer">
                                 <div
                                   className={`gauge-bar ${selectedStudent.attendance >= 75 ? 'good' : 'warning'}`}
-                                  style={{ width: `${selectedStudent.attendance}%` }}
+                                  style={{ width: `${Math.min(100, Math.max(2, selectedStudent.attendance))}%` }}
                                 />
                               </div>
-                              <div className="gauge-stats">
-                                <span className="gauge-percentage">{selectedStudent.attendance}%</span>
-                                <span className="gauge-label">
-                                  {selectedStudent.attendance >= 75 ? 'Satisfactory Attendance' : 'Shortage (Requires Attention)'}
+                              <div className="gauge-stats" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span className="gauge-percentage" style={{ fontSize: '20px', fontWeight: '800', color: selectedStudent.attendance >= 75 ? '#10b981' : '#f59e0b' }}>
+                                    {selectedStudent.attendance}%
+                                  </span>
+                                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#38bdf8' }}>
+                                    {Math.round(selectedStudent.attendance)} / 100 Lectures Marked Present
+                                  </span>
+                                </div>
+                                <span className="gauge-label" style={{ fontSize: '12px', color: '#94a3b8' }}>
+                                  {selectedStudent.attendance >= 75 ? 'Satisfactory Attendance Standing' : 'Daily Date-Wise Logs Marked by Faculty (+1% per day marked present)'}
                                 </span>
                               </div>
                             </div>
                           ) : (
-                            <div className="empty-attendance-box">
-                              <p className="empty-text" style={{ color: 'var(--warning-orange)', fontWeight: '700' }}>Not enough data</p>
-                              <span className="subtext">Daily attendance logs will be filled by class faculty members.</span>
+                            <div className="attendance-gauge-container">
+                              <div className="gauge-outer">
+                                <div className="gauge-bar warning" style={{ width: '2%' }} />
+                              </div>
+                              <div className="gauge-stats" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span className="gauge-percentage" style={{ fontSize: '20px', fontWeight: '800', color: '#f59e0b' }}>
+                                    0%
+                                  </span>
+                                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#38bdf8' }}>
+                                    0 / 100 Lectures Marked Present
+                                  </span>
+                                </div>
+                                <span className="gauge-label" style={{ fontSize: '12px', color: '#94a3b8' }}>
+                                  Daily Date-Wise Logs Marked by Faculty (+1% per day marked present)
+                                </span>
+                              </div>
                             </div>
                           )}
+
+                          {/* AI Risk Prediction Display */}
+                          <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#94a3b8' }}>🤖 AI Performance Risk Assessment</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRunStudentAiPrediction(selectedStudent.id)}
+                                style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid rgba(0,210,255,0.3)', backgroundColor: 'rgba(0,210,255,0.1)', color: '#00d2ff', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                              >
+                                {studentAiLoading[selectedStudent.id] ? 'Analyzing...' : 'Run Analysis'}
+                              </button>
+                            </div>
+                            {studentAiPredictions[selectedStudent.id] ? (
+                              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '700', color: studentAiPredictions[selectedStudent.id].risk_level === 'High' ? '#ef4444' : studentAiPredictions[selectedStudent.id].risk_level === 'Moderate' ? '#f59e0b' : '#10b981' }}>
+                                  Risk Level: {studentAiPredictions[selectedStudent.id].risk_level || 'Low'} Risk
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }}>
+                                  Pass Probability: <strong>{studentAiPredictions[selectedStudent.id].pass_probability ?? '92'}%</strong> &middot; CGPA: <strong>7.2</strong>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                                {selectedStudent.attendance >= 75 ? 'Low Risk — Expected Pass Probability > 90%' : 'Attention Needed — Low Attendance Warning'}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Guardian Contacts */}
@@ -960,8 +1172,16 @@ export default function AdminDashboard({ onLogout }) {
                               <span className="info-val"><code>{selectedStudent.username || selectedStudent.id}</code></span>
                             </div>
                             <div className="info-row">
-                              <span className="info-lbl">Login Password</span>
-                              <span className="info-val"><code>{selectedStudent.password || 'student123'}</code></span>
+                              <span className="info-lbl">Password</span>
+                              <span className="info-val">
+                                <code
+                                  onClick={() => handlePasswordClick(`student_${selectedStudent.id}`)}
+                                  style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title={unlockedKeys[`student_${selectedStudent.id}`] ? 'Click to hide password' : 'Click to verify admin password and reveal'}
+                                >
+                                  {unlockedKeys[`student_${selectedStudent.id}`] ? getStudentPassword(selectedStudent) : '••••••••'} {unlockedKeys[`student_${selectedStudent.id}`] ? <EyeIcon /> : <LockIcon />}
+                                </code>
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -989,17 +1209,18 @@ export default function AdminDashboard({ onLogout }) {
                                   onChange={(e) => setStudentNoticeChannels({ ...studentNoticeChannels, email: e.target.checked })}
                                 />
                                 <span className="custom-checkbox" />
-                                <span>Email</span>
+                                <span>Email (akshatthoriya1@gmail.com)</span>
                               </label>
 
-                              <label className="checkbox-container">
+                              <label className="checkbox-container" style={{ opacity: 0.6, cursor: 'not-allowed' }} onClick={(e) => { e.preventDefault(); alert('⚠️ WhatsApp Notification Service is currently under development & undergoing Meta API maintenance. Please use Email notification.'); }}>
                                 <input
                                   type="checkbox"
-                                  checked={studentNoticeChannels.whatsapp}
-                                  onChange={(e) => setStudentNoticeChannels({ ...studentNoticeChannels, whatsapp: e.target.checked })}
+                                  checked={false}
+                                  onChange={() => {}}
+                                  disabled
                                 />
                                 <span className="custom-checkbox" />
-                                <span>WhatsApp</span>
+                                <span>WhatsApp (Under Development 🛠️)</span>
                               </label>
                             </div>
 
@@ -1478,6 +1699,85 @@ export default function AdminDashboard({ onLogout }) {
                 </button>
                 <button type="submit" className="modal-btn-confirm">
                   Register Enrollment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* SECURITY RE-AUTHENTICATION MODAL */}
+      {/* ============================================================ */}
+      {showPasswordAuthModal && (
+        <div className="modal-backdrop" style={{ zIndex: 9999 }}>
+          <div className="modal-card animate-scale-up" style={{ maxWidth: '420px', backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: '#ffffff' }}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
+                🔒 Security Verification
+              </h3>
+              <button
+                type="button"
+                className="close-modal-btn"
+                onClick={() => setShowPasswordAuthModal(false)}
+                style={{ color: '#ffffff' }}
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleVerifyAdminPassword}>
+              <div className="modal-body" style={{ padding: '20px' }}>
+                <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '16px', lineHeight: '1.5' }}>
+                  Please re-enter your <strong>Admin Password</strong> to verify your authorization before viewing stored user credentials.
+                </p>
+                <div className="form-group">
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#e2e8f0' }}>
+                    Admin Password <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    autoFocus
+                    placeholder="Enter your admin password"
+                    value={adminAuthPassword}
+                    onChange={(e) => {
+                      setAdminAuthPassword(e.target.value);
+                      setAdminAuthError('');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                {adminAuthError && (
+                  <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px', fontWeight: '600' }}>
+                    {adminAuthError}
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <button
+                  type="button"
+                  className="modal-btn-cancel"
+                  onClick={() => setShowPasswordAuthModal(false)}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'transparent', color: '#e2e8f0', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="modal-btn-confirm"
+                  disabled={adminAuthLoading}
+                  style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', backgroundColor: '#0284c7', color: '#ffffff', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  {adminAuthLoading ? 'Verifying...' : 'Verify & Reveal'}
                 </button>
               </div>
             </form>

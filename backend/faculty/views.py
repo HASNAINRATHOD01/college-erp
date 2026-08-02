@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.response import Response
 from .models import Faculty
 from .serializers import FacultySerializer, FacultyCreateSerializer
 from users.permissions import IsAdmin
@@ -27,14 +28,16 @@ class FacultyViewSet(viewsets.ModelViewSet):
         return [IsAdmin()]
 
     def get_serializer_class(self):
-        """
-        Use FacultyCreateSerializer only for the 'create' action (POST).
-        For all other actions (list, retrieve, update, destroy) use
-        the regular FacultySerializer.
-        """
         if self.action == 'create':
             return FacultyCreateSerializer
         return FacultySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        faculty = serializer.save()
+        read_serializer = FacultySerializer(faculty)
+        return Response(read_serializer.data, status=201)
 
 
 class MyFacultyProfileView(viewsets.ReadOnlyModelViewSet):

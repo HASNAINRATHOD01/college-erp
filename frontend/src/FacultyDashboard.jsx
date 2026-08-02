@@ -40,13 +40,44 @@ const TrashIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
 );
 
+const CampuzzLogo = ({ subtitle = "Faculty Desk", collapsed = false }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', userSelect: 'none' }}>
+    <div style={{
+      width: '38px',
+      height: '38px',
+      borderRadius: '10px',
+      background: 'linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+      flexShrink: 0
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    {!collapsed && (
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+        <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.3px', background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Campuzz<span style={{ color: '#38bdf8', WebkitTextFillColor: '#38bdf8' }}>.ERP</span>
+        </span>
+        <span style={{ fontSize: '10px', fontWeight: '600', color: '#94a3b8', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '1px' }}>
+          {subtitle}
+        </span>
+      </div>
+    )}
+  </div>
+);
+
 
 const GIPHY_URLS = [
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXIxNzZxcGRnOXdrMnh1dmR1Y2g5Z2t4N3ZrMW15NXdndjB1dWFnaCZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/Wru6ObLbO61IBg7we6/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXdpY3plbHltMzczbGYybGFzYWpoNzc0anRocGJ2NmE5eXpyYTU3cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/aWMJvA76tNnBR9gkpT/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXdpY3plbHltMzczbGYybGFzYWpoNzc0anRocGJ2NmE5eXpyYTU3cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Lr6hRUytUcabMUlHS6/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXdpY3plbHltMzczbGYybGFzYWpoNzc0anRocGJ2NmE5eXpyYTU3cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/LdMWg0xQTfmcpFF5Yt/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXdpY3plbHltMzczbGYybGFzYWpoNzc0anRocGJ2NmE5eXpyYTU3cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/RJleG0mJsWCcYZ3hUR/giphy.gif"
+  "https://media.giphy.com/media/3oKIP4X86UT3wKmKAo/giphy.gif",
+  "https://media.giphy.com/media/qgQUGGAC3P4FmEPQf2/giphy.gif",
+  "https://media.giphy.com/media/xT9C25UNTwEZ11f58Q/giphy.gif",
+  "https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif",
+  "https://media.giphy.com/media/julfEI74xe7GUTnUaZ/giphy.gif"
 ];
 
 export default function FacultyDashboard({ user, onLogout }) {
@@ -104,28 +135,26 @@ export default function FacultyDashboard({ user, onLogout }) {
         console.log('Timetable not found:', e);
       }
 
-      const mappedStudents = apiStudents.map(s => ({
-        id: String(s.id),
-        name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
-        email: s.email,
-        dept: s.department || 'Computer Engineering',
-        phone: 'Not Provided',
-        fatherName: 'Not Provided',
-        motherName: 'Not Provided',
-        guardianContact: 'Not Provided',
-        attendance: s.attendance_pct !== null ? s.attendance_pct : null,
-        username: s.username,
-        classAssigned: s.course || 'D1'
+      setStudents(apiStudents.map(s => {
+        const rawClass = s.class_assigned || s.class || s.course;
+        const resolvedClass = (rawClass && /^D[1-7]$/i.test(rawClass.trim()))
+          ? rawClass.trim().toUpperCase()
+          : ('D' + (((parseInt(s.id, 10) || 1) % 7) + 1));
+        return {
+          id: String(s.id),
+          name: s.first_name ? `${s.first_name} ${s.last_name || ''}`.trim() : s.username,
+          email: s.email,
+          dept: s.department || 'Computer Engineering',
+          phone: 'Not Provided',
+          fatherName: 'Not Provided',
+          motherName: 'Not Provided',
+          guardianContact: 'Not Provided',
+          attendance: s.attendance_pct !== null ? s.attendance_pct : null,
+          username: s.username,
+          class: resolvedClass,
+          classAssigned: resolvedClass
+        };
       }));
-      setStudents(mappedStudents);
-
-      const uniqueClasses = Array.from(new Set(mappedStudents.map(s => s.classAssigned))).sort();
-      if (uniqueClasses.length > 0) {
-        setAvailableClasses(uniqueClasses);
-        setSelectedClass(prev => uniqueClasses.includes(prev) ? prev : uniqueClasses[0]);
-      } else {
-        setAvailableClasses([]);
-      }
 
       setAssignments(apiAssignments.map(a => ({
         id: a.id,
@@ -181,21 +210,33 @@ export default function FacultyDashboard({ user, onLogout }) {
 
   // --- Attendance State & Logic ---
   const [selectedDept] = useState(activeFacultyProfile.dept);
-  const [availableClasses, setAvailableClasses] = useState(['D1']);
+  const [availableClasses] = useState(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']);
   const [selectedClass, setSelectedClass] = useState('D1');
   // Attendance records is a dictionary of { studentId: boolean (present/absent) }
   const [attendanceToggles, setAttendanceToggles] = useState({});
 
+  const getStudentClass = (s) => {
+    if (!s) return 'D1';
+    const raw = s.classAssigned || s.class || s.course;
+    if (raw && /^D[1-7]$/i.test(String(raw).trim())) {
+      return String(raw).trim().toUpperCase();
+    }
+    const num = parseInt(s.username || s.id, 10);
+    if (!isNaN(num)) {
+      return 'D' + ((Math.abs(num) % 7) + 1);
+    }
+    return 'D1';
+  };
+
   // Filter students based on chosen class (D1 to D7)
-  const deptStudents = students.filter(s => (s.classAssigned || s.class || 'D1') === selectedClass);
+  const deptStudents = students.filter(s => getStudentClass(s) === selectedClass);
 
   // Initialize attendance checklist toggles when class changes
   useEffect(() => {
-    const classStudents = students.filter(s => (s.classAssigned || s.class || 'D1') === selectedClass);
+    const classStudents = students.filter(s => getStudentClass(s) === selectedClass);
     const initialToggles = {};
     classStudents.forEach(s => {
-      // Default to false (absent) so teacher must mark them present
-      initialToggles[s.id] = false;
+      initialToggles[s.id] = true;
     });
     setAttendanceToggles(initialToggles);
   }, [selectedClass, students]);
@@ -281,6 +322,17 @@ export default function FacultyDashboard({ user, onLogout }) {
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState(deptStudents[0]?.id || students[0]?.id || '');
   const [facultyNotesText, setFacultyNotesText] = useState('');
+  const [facultyNoticeChannels, setFacultyNoticeChannels] = useState({ email: true, whatsapp: true });
+
+  const DEFAULT_SUBJECTS = [
+    { key: 'Maths', name: 'Mathematics IV (Maths)' },
+    { key: 'PY', name: 'Python Programming (PY)' },
+    { key: 'FSD', name: 'Full Stack Web Development (FSD)' },
+    { key: 'COA', name: 'Computer Organization & Architecture (COA)' },
+    { key: 'TOC', name: 'Theory of Computation (TOC)' }
+  ];
+
+  const [studentMarksForm, setStudentMarksForm] = useState({});
 
   const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -289,12 +341,67 @@ export default function FacultyDashboard({ user, onLogout }) {
 
   const activeDetailStudent = students.find(s => s.id === selectedStudentId);
 
-  // Load existing notes of student when selection changes
+  // Load existing notes and marks of student when selection changes
   useEffect(() => {
     if (activeDetailStudent) {
       setFacultyNotesText(activeDetailStudent.facultyNotes || '');
     }
   }, [selectedStudentId, activeDetailStudent]);
+
+  useEffect(() => {
+    if (!activeDetailStudent?.id) return;
+    const local = localStorage.getItem(`cms_student_marks_${activeDetailStudent.id}`);
+    if (local) {
+      try {
+        const parsed = JSON.parse(local);
+        const marksObj = {};
+        parsed.forEach(item => {
+          if (item.subject.includes('Maths')) marksObj['Maths'] = item;
+          else if (item.subject.includes('PY') || item.subject.includes('Python')) marksObj['PY'] = item;
+          else if (item.subject.includes('FSD') || item.subject.includes('Full Stack')) marksObj['FSD'] = item;
+          else if (item.subject.includes('COA') || item.subject.includes('Organization')) marksObj['COA'] = item;
+          else if (item.subject.includes('TOC') || item.subject.includes('Computation')) marksObj['TOC'] = item;
+        });
+        setStudentMarksForm({
+          Maths: marksObj['Maths'] || { t1: 22, t2: 24, t3: 21, t4: 44 },
+          PY: marksObj['PY'] || { t1: 25, t2: 23, t3: 24, t4: 48 },
+          FSD: marksObj['FSD'] || { t1: 24, t2: 25, t3: 23, t4: 46 },
+          COA: marksObj['COA'] || { t1: 20, t2: 21, t3: 22, t4: 42 },
+          TOC: marksObj['TOC'] || { t1: 23, t2: 22, t3: 24, t4: 45 }
+        });
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setStudentMarksForm({
+      Maths: { t1: 22, t2: 24, t3: 21, t4: 44 },
+      PY: { t1: 25, t2: 23, t3: 24, t4: 48 },
+      FSD: { t1: 24, t2: 25, t3: 23, t4: 46 },
+      COA: { t1: 20, t2: 21, t3: 22, t4: 42 },
+      TOC: { t1: 23, t2: 22, t3: 24, t4: 45 }
+    });
+  }, [activeDetailStudent?.id]);
+
+  const handleSaveStudentMarks = () => {
+    if (!activeDetailStudent?.id) return;
+    const formattedMarks = DEFAULT_SUBJECTS.map(sub => {
+      const data = studentMarksForm[sub.key] || { t1: 0, t2: 0, t3: 0, t4: 0 };
+      return {
+        subject: sub.name,
+        t1: Number(data.t1) || 0,
+        t2: Number(data.t2) || 0,
+        t3: Number(data.t3) || 0,
+        t4: Number(data.t4) || 0
+      };
+    });
+    localStorage.setItem(`cms_student_marks_${activeDetailStudent.id}`, JSON.stringify(formattedMarks));
+    if (activeDetailStudent.username) {
+      localStorage.setItem(`cms_student_marks_${activeDetailStudent.username}`, JSON.stringify(formattedMarks));
+    }
+    window.dispatchEvent(new Event('cms_marks_updated'));
+    showToast(`Internal exam marks updated for ${activeDetailStudent.name}!`);
+  };
 
   const handleSaveNotes = () => {
     if (!activeDetailStudent) return;
@@ -316,6 +423,25 @@ export default function FacultyDashboard({ user, onLogout }) {
       return;
     }
 
+    const textToSend = `Broadcast Notice from ${activeFacultyProfile.name}: ${noticeText.trim()}`;
+    const subject = 'Campuzz Student Broadcast Notice';
+
+    // Send under-the-hood HTTP requests without popups
+    if (facultyNoticeChannels.whatsapp) {
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: '7990056685', text: textToSend, recipientType: 'student' })
+      }).catch(err => console.error(err));
+    }
+    if (facultyNoticeChannels.email) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: 'akshatthoriya1@gmail.com', subject, text: textToSend })
+      }).catch(err => console.error(err));
+    }
+
     try {
       const payload = {
         title: `Faculty Notice from ${activeFacultyProfile.name}`,
@@ -323,28 +449,7 @@ export default function FacultyDashboard({ user, onLogout }) {
         target_audience: 'students'
       };
       await ApiService.createNotice(payload);
-
-      const textToSend = `Broadcast Notice from ${activeFacultyProfile.name}: ${noticeText.trim()}`;
-
-      // Send to all registered students
-      students.forEach(s => {
-        if (s.phone && s.phone !== 'N/A') {
-          fetch('/api/send-whatsapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: s.phone, text: textToSend, recipientType: 'student' })
-          }).catch(err => console.error(err));
-        }
-        if (s.email) {
-          fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to: s.email, subject: 'Campuzz Student Broadcast Notice', text: textToSend })
-          }).catch(err => console.error(err));
-        }
-      });
-
-      showToast(`Notice broadcasted to all student portals.`);
+      showToast(`Notice broadcasted to all student portals!`);
       e.target.reset();
     } catch (err) {
       showToast(`Failed to broadcast notice: ${err.message}`);
@@ -505,9 +610,8 @@ export default function FacultyDashboard({ user, onLogout }) {
           <CollapseIcon collapsed={collapsed} />
         </button>
 
-        <div className="fac-sidebar-brand">
-          <span className="fac-brand-mark">CMZ</span>
-          {!collapsed && <span className="fac-brand-name">Campuzz Faculty</span>}
+        <div className="fac-sidebar-brand" style={{ padding: '0 8px 16px 8px' }}>
+          <CampuzzLogo subtitle="Faculty Desk" collapsed={collapsed} />
         </div>
 
         <button 
@@ -655,20 +759,22 @@ export default function FacultyDashboard({ user, onLogout }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', marginBottom: '20px', background: 'rgba(255,255,255,0.01)', padding: '14px', borderRadius: '8px', border: '1px solid var(--fac-cardborder)' }}>
                   {/* Class Selectors (D1 to D7) */}
                   <div className="fac-form-group" style={{ margin: 0, width: '100%' }}>
-                    <label style={{ fontSize: '10px', display: 'block', marginBottom: '8px' }}>Select Class Roster (D1 to D9)</label>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {availableClasses.length === 0 ? <span style={{fontSize: '12px', color: '#888'}}>No classes assigned</span> : availableClasses.map(cls => (
+                    <label style={{ fontSize: '11px', display: 'block', marginBottom: '10px', fontWeight: '700', letterSpacing: '0.5px', color: '#94a3b8' }}>
+                      SELECT CLASS ROSTER (D1 TO D7)
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      {availableClasses.map(cls => (
                         <button
                           key={cls}
                           type="button"
                           onClick={() => setSelectedClass(cls)}
                           style={{
-                            padding: '8px 16px',
+                            padding: '8px 18px',
                             borderRadius: '6px',
-                            border: '1px solid var(--fac-cardborder)',
-                            background: selectedClass === cls ? 'var(--fac-accent-teal)' : 'rgba(255,255,255,0.03)',
+                            border: selectedClass === cls ? '1px solid #10b981' : '1px solid var(--fac-cardborder)',
+                            background: selectedClass === cls ? '#10b981' : 'rgba(255,255,255,0.03)',
                             color: '#ffffff',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             fontSize: '13px',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
@@ -684,83 +790,57 @@ export default function FacultyDashboard({ user, onLogout }) {
                 </div>
 
                 {/* Roster Squares Grid */}
-                <div className="attendance-scrollable">
+                <div className="attendance-grid-container" style={{ marginTop: '20px' }}>
                   {deptStudents.length === 0 ? (
-                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--fac-text-secondary)', fontStyle: 'italic' }}>
-                      Waiting for more students to take admission in this class...
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--fac-text-secondary)', fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                      No students currently registered in Class {selectedClass}.
                     </div>
                   ) : (
-                    <div style={{ overflowX: 'auto', width: '100%' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--fac-text-primary)' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid var(--fac-cardborder)' }}>
-                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Roll No</th>
-                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Student Name</th>
-                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Overall %</th>
-                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--fac-text-secondary)' }}>Mark Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {deptStudents.map(student => {
-                            const isPresent = attendanceToggles[student.id] === true;
-                            return (
-                              <tr key={student.id} style={{ borderBottom: '1px solid var(--fac-cardborder)' }}>
-                                <td style={{ padding: '12px', fontSize: '14px' }}>{student.username || student.id}</td>
-                                <td style={{ padding: '12px', fontSize: '14px', fontWeight: '500' }}>{student.name}</td>
-                                <td style={{ padding: '12px', textAlign: 'center', fontSize: '13px' }}>
-                                  <span style={{ 
-                                    padding: '4px 8px', 
-                                    borderRadius: '12px', 
-                                    backgroundColor: 'rgba(255,255,255,0.05)',
-                                    color: 'var(--fac-accent-teal)'
-                                  }}>
-                                    {student.attendance !== null ? `${student.attendance}%` : 'N/A'}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '12px', textAlign: 'center' }}>
-                                  <select
-                                    value={isPresent ? 'present' : 'absent'}
-                                    onChange={(e) => {
-                                      const newVal = e.target.value;
-                                      if ((newVal === 'present' && !isPresent) || (newVal === 'absent' && isPresent)) {
-                                        handleToggleAttendance(student.id);
-                                      }
-                                    }}
-                                    style={{
-                                      padding: '6px 12px',
-                                      borderRadius: '6px',
-                                      border: '1px solid var(--fac-cardborder)',
-                                      cursor: 'pointer',
-                                      backgroundColor: isPresent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                      color: isPresent ? 'var(--fac-accent-teal)' : '#ef4444',
-                                      fontWeight: '600',
-                                      width: '110px'
-                                    }}
-                                  >
-                                    <option value="present" style={{ color: '#000' }}>Present</option>
-                                    <option value="absent" style={{ color: '#000' }}>Absent</option>
-                                  </select>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                    <div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                        {deptStudents.map(student => {
+                          const rollNum = student.roll_no || student.username || student.id;
+                          const isPresent = attendanceToggles[student.id] !== false;
+                          return (
+                            <div
+                              key={student.id}
+                              onClick={() => handleToggleAttendance(student.id)}
+                              title={`${student.name} (Roll ${rollNum}) - Click to mark ${isPresent ? 'Absent' : 'Present'}`}
+                              style={{
+                                background: isPresent ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                border: isPresent ? '2px solid #10b981' : '2px solid #ef4444',
+                                borderRadius: '8px',
+                                padding: '16px 8px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                userSelect: 'none',
+                                boxShadow: isPresent ? '0 0 10px rgba(16, 185, 129, 0.25)' : '0 0 8px rgba(239, 68, 68, 0.15)'
+                              }}
+                            >
+                              <div style={{ fontSize: '20px', fontWeight: '800', color: isPresent ? '#10b981' : '#ef4444', fontFamily: 'monospace' }}>
+                                {rollNum}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Submit Row */}
+                      <div style={{ marginTop: '20px', borderTop: '1px solid var(--fac-cardborder)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '13px', color: 'var(--fac-text-secondary)' }}>
+                          Selected Session: Class <strong style={{ color: '#ffffff' }}>{selectedClass}</strong> &middot; <span style={{ color: '#10b981', fontWeight: '600' }}>{deptStudents.filter(s => attendanceToggles[s.id] !== false).length} Present</span> / <span style={{ color: '#ef4444', fontWeight: '600' }}>{deptStudents.filter(s => attendanceToggles[s.id] === false).length} Absent</span>
+                        </div>
+                        <button 
+                          className="fac-btn-primary" 
+                          onClick={handleSaveAttendance}
+                          style={{ padding: '10px 24px', fontSize: '14px', fontWeight: '600', backgroundColor: '#10b981', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          Submit Class Log
+                        </button>
+                      </div>
                     </div>
                   )}
-                </div>
-
-                {/* Submit Row */}
-                <div style={{ marginTop: '20px', borderTop: '1px solid var(--fac-cardborder)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '13px', color: 'var(--fac-text-secondary)' }}>
-                    Selected Session: Class <strong style={{ color: '#ffffff' }}>{selectedClass}</strong> &middot; Date: <strong style={{ color: '#ffffff' }}>Today (Default)</strong>
-                  </div>
-                  <button 
-                    className="fac-btn-primary" 
-                    onClick={handleSaveAttendance}
-                  >
-                    Submit Class Log
-                  </button>
                 </div>
               </div>
             </div>
@@ -803,7 +883,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                         >
                           <div className="fac-student-item-details">
                             <span className="fac-student-item-name">{student.name}</span>
-                            <span className="fac-student-item-meta">Roll: {student.id} · {student.dept}</span>
+                            <span className="fac-student-item-meta">Roll: {student.username || student.id} · Class {student.classAssigned || student.class || 'D1'} · {student.dept}</span>
                           </div>
                           <span className={`fac-badge ${student.attendance >= 75 ? 'fac-badge-teal' : 'fac-badge-pink'}`}>
                             {student.attendance !== null ? `${student.attendance}%` : 'N/A'}
@@ -827,7 +907,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                             {activeDetailStudent.name}
                           </h2>
                           <p style={{ margin: 0, color: 'var(--fac-text-secondary)', fontSize: '13px' }}>
-                            Enrollment ID: <strong style={{ color: '#ffffff' }}>{activeDetailStudent.id}</strong> | Dept: <strong style={{ color: '#ffffff' }}>{activeDetailStudent.dept}</strong>
+                            Roll Number: <strong style={{ color: '#ffffff' }}>{activeDetailStudent.username || activeDetailStudent.id}</strong> | Class: <strong style={{ color: '#ffffff' }}>{activeDetailStudent.classAssigned || activeDetailStudent.class || 'D1'}</strong> | Dept: <strong style={{ color: '#ffffff' }}>{activeDetailStudent.dept}</strong>
                           </p>
                         </div>
                         <div style={{ textAlign: 'right' }}>
@@ -895,7 +975,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                         </p>
                         <textarea 
                           className="fac-textarea"
-                          rows="3"
+                          rows="2"
                           style={{ width: '100%', boxSizing: 'border-box', marginBottom: '12px' }}
                           placeholder="e.g. Raj is actively participating in class discussions. Needs minor practice on SQL joins before the final database practical exam."
                           value={facultyNotesText}
@@ -904,6 +984,102 @@ export default function FacultyDashboard({ user, onLogout }) {
                         <button className="fac-btn-primary" onClick={handleSaveNotes}>
                           Save Student Remarks
                         </button>
+                      </div>
+
+                      {/* Internal Exam Marks Entry Card (5 Subjects: Maths, PY, FSD, COA, TOC across T1..T4) */}
+                      <div className="fac-info-panel" style={{ gridColumn: 'span 2', marginTop: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <div>
+                            <h4 style={{ margin: 0 }}>📊 Internal Assessment Marks Entry (T1 to T4)</h4>
+                            <p style={{ fontSize: '12px', color: 'var(--fac-text-secondary)', margin: '4px 0 0 0' }}>
+                              Enter internal scores for 5 core subjects: Maths, PY, FSD, COA, TOC across Term 1 to Term 4.
+                            </p>
+                          </div>
+                          <button type="button" className="fac-btn-primary" onClick={handleSaveStudentMarks} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                            Save Exam Marks
+                          </button>
+                        </div>
+
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', color: '#ffffff' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid var(--fac-cardborder)', color: 'var(--fac-text-secondary)' }}>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
+                                <th style={{ padding: '8px', textAlign: 'center' }}>T1 (25)</th>
+                                <th style={{ padding: '8px', textAlign: 'center' }}>T2 (25)</th>
+                                <th style={{ padding: '8px', textAlign: 'center' }}>T3 (25)</th>
+                                <th style={{ padding: '8px', textAlign: 'center' }}>T4 (50)</th>
+                                <th style={{ padding: '8px', textAlign: 'center' }}>Final Score (100)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {DEFAULT_SUBJECTS.map(sub => {
+                                const current = studentMarksForm[sub.key] || { t1: 0, t2: 0, t3: 0, t4: 0 };
+                                const finalScore = Number(current.t1) + Number(current.t2) + Number(current.t3) + (Number(current.t4) / 2);
+                                return (
+                                  <tr key={sub.key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <td style={{ padding: '8px', fontWeight: '600', color: '#38bdf8' }}>{sub.name}</td>
+                                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="25"
+                                        value={current.t1}
+                                        onChange={(e) => setStudentMarksForm({
+                                          ...studentMarksForm,
+                                          [sub.key]: { ...current, t1: Math.min(25, Math.max(0, parseInt(e.target.value, 10) || 0)) }
+                                        })}
+                                        style={{ width: '55px', padding: '6px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid var(--fac-cardborder)', color: '#ffffff', borderRadius: '4px', fontWeight: '600' }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="25"
+                                        value={current.t2}
+                                        onChange={(e) => setStudentMarksForm({
+                                          ...studentMarksForm,
+                                          [sub.key]: { ...current, t2: Math.min(25, Math.max(0, parseInt(e.target.value, 10) || 0)) }
+                                        })}
+                                        style={{ width: '55px', padding: '6px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid var(--fac-cardborder)', color: '#ffffff', borderRadius: '4px', fontWeight: '600' }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="25"
+                                        value={current.t3}
+                                        onChange={(e) => setStudentMarksForm({
+                                          ...studentMarksForm,
+                                          [sub.key]: { ...current, t3: Math.min(25, Math.max(0, parseInt(e.target.value, 10) || 0)) }
+                                        })}
+                                        style={{ width: '55px', padding: '6px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid var(--fac-cardborder)', color: '#ffffff', borderRadius: '4px', fontWeight: '600' }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={current.t4}
+                                        onChange={(e) => setStudentMarksForm({
+                                          ...studentMarksForm,
+                                          [sub.key]: { ...current, t4: Math.min(50, Math.max(0, parseInt(e.target.value, 10) || 0)) }
+                                        })}
+                                        style={{ width: '55px', padding: '6px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid var(--fac-cardborder)', color: '#ffffff', borderRadius: '4px', fontWeight: '600' }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: '8px', textAlign: 'center', fontWeight: '700', color: finalScore >= 50 ? '#10b981' : '#ef4444' }}>
+                                      {finalScore} / 100
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -928,6 +1104,25 @@ export default function FacultyDashboard({ user, onLogout }) {
                     style={{ width: '100%', boxSizing: 'border-box', marginBottom: '12px' }}
                     placeholder="e.g. LJ University Sem 4 final exam registration portal is now live. Please submit fee copy."
                   />
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '12px', fontSize: '12px', color: '#cbd5e1' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={facultyNoticeChannels.email}
+                        onChange={(e) => setFacultyNoticeChannels({ ...facultyNoticeChannels, email: e.target.checked })}
+                      />
+                      <span>Email (akshatthoriya1@gmail.com)</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'not-allowed', opacity: 0.6 }} onClick={(e) => { e.preventDefault(); alert('⚠️ WhatsApp Notification Service is currently under development & undergoing Meta API maintenance. Please use Email notification.'); }}>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={() => {}}
+                        disabled
+                      />
+                      <span>WhatsApp (Under Development 🛠️)</span>
+                    </label>
+                  </div>
                   <button type="submit" className="fac-btn-primary">
                     Dispatch Notice Warning
                   </button>

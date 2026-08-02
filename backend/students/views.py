@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.response import Response
 from .models import Student
 from .serializers import StudentSerializer, StudentCreateSerializer
 from users.permissions import IsAdmin
@@ -52,6 +53,13 @@ class StudentViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return StudentCreateSerializer
         return StudentSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        read_serializer = StudentSerializer(student)
+        return Response(read_serializer.data, status=201)
 
 
 class MyStudentProfileView(viewsets.ReadOnlyModelViewSet):

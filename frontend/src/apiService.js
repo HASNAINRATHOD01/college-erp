@@ -19,7 +19,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       // If unauthorized (401), clear tokens and reload
       if (response.status === 401) {
         localStorage.removeItem('cms_access_token');
@@ -31,13 +31,35 @@ class ApiService {
         return { success: true };
       }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || data.detail || data.message || response.statusText || 'API error');
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+      let data = {};
+
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = { message: rawText };
+        }
       }
+
+      if (!response.ok) {
+        let errorMsg = data.detail || data.message || data.error;
+        if (!errorMsg && typeof data === 'object' && data !== null) {
+          const formatted = Object.entries(data)
+            .map(([field, errs]) => `${field}: ${Array.isArray(errs) ? errs.join(', ') : errs}`)
+            .join(' | ');
+          if (formatted) errorMsg = formatted;
+        }
+        throw new Error(errorMsg || response.statusText || 'API error');
+      }
+
       return data;
     } catch (error) {
       console.error(`API Error on ${endpoint}:`, error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to the backend server. Please ensure Django is running on http://127.0.0.1:8000');
+      }
       throw error;
     }
   }
@@ -48,10 +70,16 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
-    if (data.access) {
+
+    if (data?.access) {
       localStorage.setItem('cms_access_token', data.access);
-      localStorage.setItem('cms_refresh_token', data.refresh);
+      if (data.refresh) {
+        localStorage.setItem('cms_refresh_token', data.refresh);
+      }
+    } else {
+      throw new Error(data?.detail || data?.message || 'Invalid login response from the server.');
     }
+
     return data;
   }
 

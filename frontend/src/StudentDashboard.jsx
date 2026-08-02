@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './StudentDashboard.css';
 import GrowingPlant from './GrowingPlant';
 import ApiService from './apiService';
+import WordSearchGame from './WordSearchGame';
 
 // SVG Icons for clean, zero-dependency deployment
 const ProfileIcon = () => (
@@ -42,6 +43,41 @@ const DriveIcon = () => (
 
 const GithubIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+);
+
+const GameIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+);
+
+const CampuzzLogo = ({ subtitle = "Student Portal", collapsed = false }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', userSelect: 'none' }}>
+    <div style={{
+      width: '38px',
+      height: '38px',
+      borderRadius: '10px',
+      background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 14px rgba(56, 189, 248, 0.4)',
+      flexShrink: 0
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    {!collapsed && (
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+        <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.3px', color: '#ffffff' }}>
+          Campuzz<span style={{ color: '#38bdf8' }}>.ERP</span>
+        </span>
+        <span style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '1px' }}>
+          {subtitle}
+        </span>
+      </div>
+    )}
+  </div>
 );
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -90,39 +126,66 @@ export default function StudentDashboard({ user, onLogout }) {
         const apiMarks = await ApiService.getMarks({ student_id: active.id });
         const comments = apiMarks.filter(m => m.remarks).map(m => m.remarks).join('; ');
 
+        const savedContactsStr = localStorage.getItem(`cms_student_contacts_${active.id}`) || localStorage.getItem(`cms_student_contacts_${active.username}`);
+        let savedContacts = {};
+        if (savedContactsStr) {
+          try { savedContacts = JSON.parse(savedContactsStr); } catch (e) {}
+        }
+
         setCurrentStudent({
           id: String(active.id),
           name: active.first_name ? `${active.first_name} ${active.last_name || ''}`.trim() : active.username,
           email: active.email,
           dept: active.department || 'Computer Engineering',
-          phone: 'Not Provided',
-          fatherName: 'Not Provided',
-          motherName: 'Not Provided',
-          guardianContact: 'Not Provided',
+          phone: savedContacts.phone || active.phone || '+91 79900 56685',
+          fatherName: savedContacts.fatherName || 'Not Provided',
+          motherName: savedContacts.motherName || 'Not Provided',
+          guardianContact: savedContacts.guardianContact || '+91 94285 12345',
+          cgpa: '7.2',
           attendance: active.attendance_pct !== null ? active.attendance_pct : null,
           username: active.username,
           facultyNotes: comments || '',
-          classAssigned: active.course || 'D1'
+          class: active.class_assigned || active.class || active.course || 'D1',
+          classAssigned: active.class_assigned || active.class || active.course || 'D1'
         });
 
-        // Map marks to T1..T4
-        const subjectsMap = {};
-        apiMarks.forEach(m => {
-          const subName = m.subject;
-          if (!subjectsMap[subName]) {
-            subjectsMap[subName] = { subject: subName, t1: 0, t2: 0, t3: 0, t4: 0 };
+        const savedLocalMarks = localStorage.getItem(`cms_student_marks_${active.id}`) || localStorage.getItem(`cms_student_marks_${active.username}`);
+        if (savedLocalMarks) {
+          try {
+            setMarks(JSON.parse(savedLocalMarks));
+          } catch (e) {
+            console.error(e);
           }
-          if (m.exam_type === 'internal') {
-            subjectsMap[subName].t1 = m.marks_obtained;
-          } else if (m.exam_type === 'midterm') {
-            subjectsMap[subName].t2 = m.marks_obtained;
-          } else if (m.exam_type === 'practical') {
-            subjectsMap[subName].t3 = m.marks_obtained;
-          } else if (m.exam_type === 'final') {
-            subjectsMap[subName].t4 = m.marks_obtained;
+        } else {
+          const subjectsMap = {};
+          apiMarks.forEach(m => {
+            const subName = m.subject;
+            if (!subjectsMap[subName]) {
+              subjectsMap[subName] = { subject: subName, t1: 0, t2: 0, t3: 0, t4: 0 };
+            }
+            if (m.exam_type === 'internal') {
+              subjectsMap[subName].t1 = m.marks_obtained;
+            } else if (m.exam_type === 'midterm') {
+              subjectsMap[subName].t2 = m.marks_obtained;
+            } else if (m.exam_type === 'practical') {
+              subjectsMap[subName].t3 = m.marks_obtained;
+            } else if (m.exam_type === 'final') {
+              subjectsMap[subName].t4 = m.marks_obtained;
+            }
+          });
+          const mappedValues = Object.values(subjectsMap);
+          if (mappedValues.length > 0) {
+            setMarks(mappedValues);
+          } else {
+            setMarks([
+              { subject: 'Mathematics IV (Maths)', t1: 22, t2: 24, t3: 21, t4: 44 },
+              { subject: 'Python Programming (PY)', t1: 25, t2: 23, t3: 24, t4: 48 },
+              { subject: 'Full Stack Web Development (FSD)', t1: 24, t2: 25, t3: 23, t4: 46 },
+              { subject: 'Computer Organization & Architecture (COA)', t1: 20, t2: 21, t3: 22, t4: 42 },
+              { subject: 'Theory of Computation (TOC)', t1: 23, t2: 22, t3: 24, t4: 45 }
+            ]);
           }
-        });
-        setMarks(Object.values(subjectsMap));
+        }
 
         try {
           const apiTimetable = await ApiService.getLatestTimetableImage();
@@ -160,6 +223,24 @@ export default function StudentDashboard({ user, onLogout }) {
     loadDatabase();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    const handleMarksUpdate = () => {
+      if (currentStudent?.id || currentStudent?.username) {
+        const savedLocalMarks = localStorage.getItem(`cms_student_marks_${currentStudent.id}`) || localStorage.getItem(`cms_student_marks_${currentStudent.username}`);
+        if (savedLocalMarks) {
+          try {
+            setMarks(JSON.parse(savedLocalMarks));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('cms_marks_updated', handleMarksUpdate);
+    return () => window.removeEventListener('cms_marks_updated', handleMarksUpdate);
+  }, [currentStudent?.id, currentStudent?.username]);
 
   // Toast utility
   const showToast = (msg) => {
@@ -219,9 +300,8 @@ export default function StudentDashboard({ user, onLogout }) {
           <CollapseIcon collapsed={collapsed} />
         </button>
 
-        <div className="std-sidebar-brand">
-          <span className="std-brand-mark">CMZ</span>
-          {!collapsed && <span className="std-brand-name">Campuzz Student</span>}
+        <div className="std-sidebar-brand" style={{ padding: '0 8px 16px 8px' }}>
+          <CampuzzLogo subtitle="Student Portal" collapsed={collapsed} />
         </div>
 
         {/* Profile Snapshot inside Sidebar */}
@@ -307,6 +387,16 @@ export default function StudentDashboard({ user, onLogout }) {
             <FacultyIcon />
             {!collapsed && <span className="std-nav-label">Faculty Details</span>}
           </button>
+
+          <button 
+            type="button" 
+            className={`std-nav-item ${activeTab === 'game' ? 'active' : ''}`}
+            onClick={() => setActiveTab('game')}
+            title="Academic Brain Break Game"
+          >
+            <GameIcon />
+            {!collapsed && <span className="std-nav-label">Word Search Game</span>}
+          </button>
         </nav>
 
         {/* Customized growing plant with red and orange petals */}
@@ -331,6 +421,7 @@ export default function StudentDashboard({ user, onLogout }) {
               {activeTab === 'assignments' && 'Pending Coursework & Deadlines'}
               {activeTab === 'library' && 'Campuzz Libre Textbook Shelf'}
               {activeTab === 'faculty' && 'Course Faculty & Syllabus Repositories'}
+              {activeTab === 'game' && 'Academic Brain Break & Word Search'}
             </h1>
           </div>
           <div className="std-header-date">
@@ -355,7 +446,7 @@ export default function StudentDashboard({ user, onLogout }) {
                     {getInitials(currentStudent.name)}
                   </div>
                   <div>
-                    <h2 className="student-profile-name-title" style={{ fontSize: '20px', margin: 0, fontWeight: '600', color: '#ffffff' }}>{currentStudent.name}</h2>
+                    <h2 className="student-profile-name-title" style={{ fontSize: '20px', margin: 0, fontWeight: '600', color: 'var(--std-text-primary)' }}>{currentStudent.name}</h2>
                     <span className="std-badge std-badge-orange" style={{ marginTop: '4px' }}>
                       {currentStudent.dept}
                     </span>
@@ -450,52 +541,54 @@ export default function StudentDashboard({ user, onLogout }) {
           {/* EXAM MARKS TAB */}
           {/* ============================================================ */}
           {activeTab === 'marks' && (
-            <div className="std-card animate-fade-in" style={{ marginBottom: 0 }}>
-              <h3>Internal Assessments Gradebook</h3>
-              <p className="std-card-desc">
-                Review your current semester term marks. In this university, internal marks are formulated as:
-              </p>
-              
-              <div style={{ backgroundColor: 'rgba(234, 88, 12, 0.08)', border: '1px solid var(--std-border)', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontSize: '13px', lineHeight: '1.6' }}>
-                💡 <strong>Internal Scoring Formula:</strong> 
-                <div style={{ fontFamily: 'monospace', fontSize: '13.5px', marginTop: '6px', color: 'var(--std-primary-hover)', fontWeight: '700' }}>
-                  Final Score (100) = Term 1 (25) + Term 2 (25) + Term 3 (25) + (Term 4 (50) / 2)
-                </div>
-                <div style={{ marginTop: '8px', color: 'var(--std-text-secondary)', fontSize: '12px' }}>
-                  The first three mid-sem exams are evaluated out of 25. The final term exam (T4) is evaluated out of 50 and is halved before compilation.
-                </div>
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} className="animate-fade-in">
+              <div className="std-card" style={{ marginBottom: 0 }}>
+                <h3>Internal Assessments Gradebook</h3>
+                <p className="std-card-desc">
+                  Review your current semester term marks. In this university, internal marks are formulated as:
+                </p>
 
-              <div className="marks-table-wrapper">
-                <table className="marks-table">
-                  <thead>
-                    <tr>
-                      <th>Subject Course Title</th>
-                      <th style={{ textAlign: 'center' }}>T1 (25)</th>
-                      <th style={{ textAlign: 'center' }}>T2 (25)</th>
-                      <th style={{ textAlign: 'center' }}>T3 (25)</th>
-                      <th style={{ textAlign: 'center' }}>T4 (50)</th>
-                      <th style={{ textAlign: 'center' }}>Final Score (100)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {marks.map((row, idx) => {
-                      const finalScore = row.t1 + row.t2 + row.t3 + (row.t4 / 2);
-                      return (
-                        <tr key={idx}>
-                          <td style={{ fontWeight: '500' }}>{row.subject}</td>
-                          <td style={{ textAlign: 'center' }}>{row.t1}</td>
-                          <td style={{ textAlign: 'center' }}>{row.t2}</td>
-                          <td style={{ textAlign: 'center' }}>{row.t3}</td>
-                          <td style={{ textAlign: 'center' }}>{row.t4}</td>
-                          <td style={{ textAlign: 'center', fontWeight: '700', color: finalScore >= 50 ? 'var(--std-success)' : 'var(--std-danger)' }}>
-                            {finalScore}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div style={{ backgroundColor: 'rgba(234, 88, 12, 0.08)', border: '1px solid var(--std-border)', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontSize: '13px', lineHeight: '1.6' }}>
+                  💡 <strong>Internal Scoring Formula:</strong>
+                  <div style={{ fontFamily: 'monospace', fontSize: '13.5px', marginTop: '6px', color: 'var(--std-primary-hover)', fontWeight: '700' }}>
+                    Final Score (100) = Term 1 (25) + Term 2 (25) + Term 3 (25) + (Term 4 (50) / 2)
+                  </div>
+                  <div style={{ marginTop: '8px', color: 'var(--std-text-secondary)', fontSize: '12px' }}>
+                    The first three mid-sem exams are evaluated out of 25. The final term exam (T4) is evaluated out of 50 and is halved before compilation.
+                  </div>
+                </div>
+
+                <div className="marks-table-wrapper">
+                  <table className="marks-table">
+                    <thead>
+                      <tr>
+                        <th>Subject Course Title</th>
+                        <th style={{ textAlign: 'center' }}>T1 (25)</th>
+                        <th style={{ textAlign: 'center' }}>T2 (25)</th>
+                        <th style={{ textAlign: 'center' }}>T3 (25)</th>
+                        <th style={{ textAlign: 'center' }}>T4 (50)</th>
+                        <th style={{ textAlign: 'center' }}>Final Score (100)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {marks.map((row, idx) => {
+                        const finalScore = row.t1 + row.t2 + row.t3 + (row.t4 / 2);
+                        return (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: '500' }}>{row.subject}</td>
+                            <td style={{ textAlign: 'center' }}>{row.t1}</td>
+                            <td style={{ textAlign: 'center' }}>{row.t2}</td>
+                            <td style={{ textAlign: 'center' }}>{row.t3}</td>
+                            <td style={{ textAlign: 'center' }}>{row.t4}</td>
+                            <td style={{ textAlign: 'center', fontWeight: '700', color: finalScore >= 50 ? 'var(--std-success)' : 'var(--std-danger)' }}>
+                              {finalScore}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -694,6 +787,15 @@ export default function StudentDashboard({ user, onLogout }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* BRAIN BREAK WORD SEARCH GAME TAB */}
+          {/* ============================================================ */}
+          {activeTab === 'game' && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <WordSearchGame />
             </div>
           )}
 

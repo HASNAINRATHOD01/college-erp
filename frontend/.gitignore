@@ -25,3 +25,8 @@ dist-ssr
 package.json/
 package-lock.json/
 node_modules/
+
+# Baileys auth info
+baileys_auth_info*
+bailey_auth_info*
+

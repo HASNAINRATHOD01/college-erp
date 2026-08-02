@@ -14,6 +14,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        username_or_email = attrs.get(self.username_field)
+        if username_or_email:
+            username_or_email = username_or_email.strip()
+            user = User.objects.filter(username__iexact=username_or_email).first()
+            if not user:
+                user = User.objects.filter(email__iexact=username_or_email).first()
+            if user:
+                attrs[self.username_field] = user.username
+
         data = super().validate(attrs)
         data['role'] = self.user.role
         data['username'] = self.user.username
@@ -21,6 +30,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    department = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -30,14 +41,22 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'role',
+            'department',
             'is_active',
             'date_joined',
         )
         read_only_fields = fields
 
+    def get_department(self, obj):
+        if obj.role == User.Role.FACULTY and hasattr(obj, 'faculty_profile'):
+            return obj.faculty_profile.department
+        elif obj.role == User.Role.STUDENT and hasattr(obj, 'student_profile'):
+            return obj.student_profile.department
+        return ''
+
 
 class AdminUserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True, min_length=4)
 
     class Meta:
         model = User

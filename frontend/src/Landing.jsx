@@ -7,6 +7,35 @@ const ROLES = [
   { key: 'student', label: 'Student', hint: 'Roll Number' },
 ];
 
+const CampuzzLogo = () => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', userSelect: 'none' }}>
+    <div style={{
+      width: '38px',
+      height: '38px',
+      borderRadius: '10px',
+      background: 'linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+      flexShrink: 0
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+      <span style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.3px', background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        Campuzz<span style={{ color: '#38bdf8', WebkitTextFillColor: '#38bdf8' }}>.ERP</span>
+      </span>
+      <span style={{ fontSize: '10px', fontWeight: '600', color: '#94a3b8', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '1px' }}>
+        Academic Suite
+      </span>
+    </div>
+  </div>
+);
+
 export default function Landing({ onLogin }) {
   const [activeRole, setActiveRole] = useState('faculty');
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -41,17 +70,29 @@ export default function Landing({ onLogin }) {
 
     try {
       // 1. Perform backend JWT login
-      await ApiService.login(usernameInput, passwordInput);
-      
+      const loginResponse = await ApiService.login(usernameInput, passwordInput);
+
+      if (!loginResponse?.access) {
+        throw new Error('No access token returned from the server.');
+      }
+
       // 2. Fetch logged-in user profile details
       const me = await ApiService.getMe();
       
+      if (activeRole !== me.role && me.role !== 'admin') {
+        throw new Error(`This account is registered as a ${me.role}. Please select the ${me.role.charAt(0).toUpperCase() + me.role.slice(1)} tab to log in.`);
+      }
+
+      const fullName = (me.first_name || me.last_name) 
+        ? `${me.first_name || ''} ${me.last_name || ''}`.trim() 
+        : me.username;
+
       const sessionUser = {
         role: me.role, // 'admin', 'faculty', 'student'
         username: me.username,
         email: me.email,
         id: me.id,
-        name: me.first_name ? `${me.first_name} ${me.last_name || ''}`.trim() : me.username,
+        name: fullName,
         dept: me.department || '',
         loggedInAt: new Date().toISOString()
       };
@@ -76,8 +117,7 @@ export default function Landing({ onLogin }) {
     <div className={`home theme-${activeRole}`}>
       <nav className="navbar">
         <div className="navbar-brand">
-          <span className="brand-mark">CMZ</span>
-          <span className="brand-name">Campuzz</span>
+          <CampuzzLogo />
         </div>
       </nav>
 

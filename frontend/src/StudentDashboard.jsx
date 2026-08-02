@@ -68,7 +68,8 @@ export default function StudentDashboard({ user, onLogout }) {
   const [facultyList, setFacultyList] = useState([]);
   const [marks, setMarks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
-  const [timetableSlots, setTimetableSlots] = useState([]);
+  // --- Timetable State ---
+  const [timetableImage, setTimetableImage] = useState(null);
 
   // Sync / load helper
   const loadDatabase = async () => {
@@ -123,14 +124,16 @@ export default function StudentDashboard({ user, onLogout }) {
         });
         setMarks(Object.values(subjectsMap));
 
-        // Fetch timetable slots for this student
-        const apiTimetable = await ApiService.getTimetable({
-          department: active.department || 'Computer Engineering',
-          semester: active.semester || 4
-        });
-        setTimetableSlots(apiTimetable);
+        try {
+          const apiTimetable = await ApiService.getLatestTimetableImage();
+          if (apiTimetable && apiTimetable.image) {
+            setTimetableImage(apiTimetable.image);
+          }
+        } catch (e) {
+          console.log('Timetable not found:', e);
+        }
       }
-
+      
       // Load assignments
       const apiAss = await ApiService.getAssignments();
       const sortedAss = [...apiAss].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -524,51 +527,39 @@ export default function StudentDashboard({ user, onLogout }) {
           {/* ============================================================ */}
           {activeTab === 'timetable' && (
             <div className="timetable-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="std-card" style={{ margin: 0, padding: '24px' }}>
+              <div className="std-card">
                 <h3>Weekly Academic Class Timetable</h3>
-                <p className="std-card-desc" style={{ marginBottom: '20px' }}>Your class scheduling directory for the current semester semester.</p>
-                
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="marks-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
-                    <thead>
-                      <tr>
-                        <th>Time / Day</th>
-                        {DAYS_OF_WEEK.map(day => (
-                          <th key={day} style={{ textAlign: 'center', minWidth: '120px' }}>{day}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {TIME_SLOTS.map(slot => (
-                        <tr key={slot}>
-                          <td style={{ fontWeight: '600', whiteSpace: 'nowrap', padding: '12px' }}>{slot}</td>
-                          {DAYS_OF_WEEK.map(day => {
-                            const matchedSlot = timetableSlots.find(
-                              s => s.day === day && s.time_slot === slot
-                            );
-                            return (
-                              <td key={day} style={{ textAlign: 'center', padding: '10px', height: '80px', verticalAlign: 'middle', border: '1px solid var(--std-border)', backgroundColor: matchedSlot ? 'rgba(234, 88, 12, 0.06)' : 'transparent' }}>
-                                {matchedSlot ? (
-                                  <div>
-                                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--std-primary)' }}>{matchedSlot.subject}</div>
-                                    <div style={{ fontSize: '11px', color: 'var(--std-text-secondary)', marginTop: '4px' }}>{matchedSlot.faculty_name || 'Prof.'}</div>
-                                    {matchedSlot.room && (
-                                      <span className="std-badge std-badge-orange" style={{ fontSize: '9px', marginTop: '6px', padding: '2px 6px', display: 'inline-block' }}>
-                                        {matchedSlot.room}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: '12px', color: 'var(--std-text-muted)', fontStyle: 'italic' }}>—</span>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                {timetableImage ? (
+                  <div style={{ textAlign: 'center', border: '1px solid var(--std-border)', padding: '10px', borderRadius: '8px', backgroundColor: '#f9fafb', marginTop: '20px' }}>
+                    <div style={{ marginBottom: '10px', textAlign: 'right' }}>
+                      <a 
+                        href={timetableImage} 
+                        download="Weekly_Timetable" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-block', padding: '8px 16px', backgroundColor: 'var(--std-primary)', color: 'white', textDecoration: 'none', borderRadius: '4px', fontSize: '14px', fontWeight: 'bold' }}
+                      >
+                        ⬇ Download Timetable
+                      </a>
+                    </div>
+                    {timetableImage.toLowerCase().endsWith('.pdf') ? (
+                      <object data={timetableImage} type="application/pdf" width="100%" height="800px">
+                        <p>Your browser does not support PDFs. <a href={timetableImage} target="_blank" rel="noopener noreferrer">Download the PDF</a>.</p>
+                      </object>
+                    ) : (
+                      <img 
+                        src={timetableImage} 
+                        alt="Weekly Timetable" 
+                        style={{ maxWidth: '100%', maxHeight: '800px', objectFit: 'contain', borderRadius: '4px' }}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--std-text-secondary)', border: '1px dashed var(--std-border)', borderRadius: '8px', marginTop: '20px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                    <p style={{ margin: 0, fontSize: '16px' }}>No weekly timetable has been uploaded yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

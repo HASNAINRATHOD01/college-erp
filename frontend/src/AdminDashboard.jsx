@@ -53,6 +53,11 @@ export default function AdminDashboard({ onLogout }) {
   // AI Predictor State
   const [selectedPredictStudentId, setSelectedPredictStudentId] = useState('');
   const [predicting, setPredicting] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  
+  // --- Timetable State ---
+  const [timetableImage, setTimetableImage] = useState(null);
+  const [timetableLoading, setTimetableLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
   const [predictionHistory, setPredictionHistory] = useState([]);
 
@@ -117,7 +122,19 @@ export default function AdminDashboard({ onLogout }) {
   useEffect(() => {
     loadData();
     loadPredictionHistory();
+    fetchTimetableImage();
   }, []);
+
+  const fetchTimetableImage = async () => {
+    try {
+      const data = await ApiService.getLatestTimetableImage();
+      if (data && data.image) {
+        setTimetableImage(data.image);
+      }
+    } catch (err) {
+      console.log('No timetable image found or error fetching:', err);
+    }
+  };
 
   // Sync to LocalStorage
   useEffect(() => {
@@ -173,7 +190,6 @@ export default function AdminDashboard({ onLogout }) {
 
     let resolvedId = id.trim();
     if (!resolvedId) {
-      // Auto-generate chronological ID
       const numericIds = faculty
         .map(f => {
           const match = f.username.match(/^F(\d+)$/i);
@@ -185,13 +201,23 @@ export default function AdminDashboard({ onLogout }) {
     }
 
     const cleanName = name.replace(/^(dr|prof|mr|mrs|ms)\.?\s+/i, '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const defaultPass = cleanName.substring(0, 4) + resolvedId.trim().toLowerCase();
+    const defaultPass = (cleanName.substring(0, 4) + resolvedId.trim().toLowerCase() + '@123').padEnd(8, '0');
     const finalPassword = password.trim() || defaultPass;
 
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+    
+    const shortName = cleanName.substring(0, 3).toUpperCase();
+    const numericId = resolvedId.replace(/[^0-9]/g, '');
+    const finalUsername = `${shortName}${numericId || resolvedId}`;
+
     const payload = {
-      username: resolvedId.toUpperCase(),
+      username: finalUsername,
       email: email.trim(),
       password: finalPassword,
+      first_name: firstName,
+      last_name: lastName,
       employee_id: resolvedId.toUpperCase(),
       department: dept,
       designation: 'Assistant Professor',
@@ -214,9 +240,33 @@ export default function AdminDashboard({ onLogout }) {
     try {
       await ApiService.deleteFaculty(id);
       await loadData();
-      showToast(`Faculty member ${name} removed successfully.`);
+      alert('Prediction logs cleared successfully');
     } catch (err) {
-      showToast(`Error: ${err.message}`);
+      alert(err.message || 'Error clearing logs');
+    }
+  };
+
+  const handleUploadTimetable = async (e) => {
+    e.preventDefault();
+    const file = e.target.timetableFile.files[0];
+    if (!file) {
+      alert('Please select a file first.');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    setTimetableLoading(true);
+    try {
+      const response = await ApiService.uploadTimetableImage(formData);
+      setTimetableImage(response.image);
+      alert('Timetable uploaded successfully!');
+      e.target.reset();
+    } catch (err) {
+      alert(err.message || 'Error uploading timetable');
+    } finally {
+      setTimetableLoading(false);
     }
   };
 
@@ -235,7 +285,6 @@ export default function AdminDashboard({ onLogout }) {
       };
       await ApiService.createNotice(payload);
 
-      // Email/WhatsApp copy sending
       const targetFaculty = selectedFacultyNoticeTarget === 'all' 
         ? faculty 
         : faculty.filter(f => f.id === selectedFacultyNoticeTarget);
@@ -290,7 +339,6 @@ export default function AdminDashboard({ onLogout }) {
 
     let resolvedId = id.trim();
     if (!resolvedId) {
-      // Auto-generate chronological Roll Number starting at 204
       const numericIds = students
         .map(s => {
           const match = s.username.match(/^(\d+)$/);
@@ -302,13 +350,22 @@ export default function AdminDashboard({ onLogout }) {
     }
 
     const cleanName = name.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const defaultPass = cleanName.substring(0, 4) + resolvedId.toLowerCase();
+    const defaultPass = (cleanName.substring(0, 4) + resolvedId.toLowerCase() + '@123').padEnd(8, '0');
     const finalPassword = password.trim() || defaultPass;
 
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+
+    const shortName = cleanName.substring(0, 3).toUpperCase();
+    const finalUsername = `${shortName}${resolvedId}`;
+
     const payload = {
-      username: resolvedId,
+      username: finalUsername,
       email: email.trim(),
       password: finalPassword,
+      first_name: firstName,
+      last_name: lastName,
       roll_no: resolvedId,
       course: 'B.Tech',
       semester: 4,
@@ -363,7 +420,6 @@ export default function AdminDashboard({ onLogout }) {
       const textToSend = `Notice Alert to Student ${selectedStudent.name} (Roll ${selectedStudent.username}): ${studentNotice.trim()}`;
       
       if (studentNoticeChannels.whatsapp) {
-        // Send to student's phone
         if (selectedStudent.phone && selectedStudent.phone !== 'N/A') {
           fetch('/api/send-whatsapp', {
             method: 'POST',
@@ -373,7 +429,6 @@ export default function AdminDashboard({ onLogout }) {
         }
       }
       if (studentNoticeChannels.email) {
-        // Send to student's email
         if (selectedStudent.email) {
           fetch('/api/send-email', {
             method: 'POST',
@@ -493,7 +548,18 @@ export default function AdminDashboard({ onLogout }) {
             title="AI Risk Predictor"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            {!collapsed && <span>AI Risk Predictor</span>}
+            <span className="nav-label">AI Predictor</span>
+          </button>
+
+          <button
+            className={`nav-item ${activeTab === 'timetable' ? 'active' : ''}`}
+            onClick={() => setActiveTab('timetable')}
+            title="Weekly Timetable"
+          >
+            <div className="nav-icon" style={{ backgroundColor: activeTab === 'timetable' ? 'var(--std-primary)' : 'rgba(255,255,255,0.1)' }}>
+              📅
+            </div>
+            <span className="nav-label">Timetable</span>
           </button>
         </nav>
 
@@ -524,6 +590,7 @@ export default function AdminDashboard({ onLogout }) {
               {activeTab === 'faculty' && 'Faculty Member Records'}
               {activeTab === 'students' && 'Student Performance & Profiles'}
               {activeTab === 'ai-predictor' && 'AI Performance Risk Analysis'}
+              {activeTab === 'timetable' && 'Weekly Timetable Management'}
             </h1>
           </div>
           <div className="header-date">
@@ -636,7 +703,6 @@ export default function AdminDashboard({ onLogout }) {
                           <th>Email Address</th>
                           <th>Phone</th>
                           <th>Username</th>
-                          <th>Password</th>
                           <th style={{ textAlign: 'center' }}>Action</th>
                         </tr>
                       </thead>
@@ -650,7 +716,6 @@ export default function AdminDashboard({ onLogout }) {
                             <td>{f.email}</td>
                             <td>{f.phone}</td>
                             <td><code>{f.username || f.id}</code></td>
-                            <td><code>{f.password || 'faculty123'}</code></td>
                             <td style={{ textAlign: 'center' }}>
                               <button
                                 type="button"
@@ -995,7 +1060,7 @@ export default function AdminDashboard({ onLogout }) {
               {predictionResult && (
                 <div className="std-card animate-scale-up" style={{ margin: 0, border: '1.5px solid var(--std-border)' }}>
                   <h4 style={{ fontSize: '16px', color: 'var(--std-text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    📊 Assessment Report: {predictionResult.student_roll_no}
+                    📊 Assessment Report: {students.find(s => s.id === String(predictionResult.student_id))?.name || predictionResult.student_roll_no}
                   </h4>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -1061,7 +1126,7 @@ export default function AdminDashboard({ onLogout }) {
                       ) : (
                         predictionHistory.map(log => (
                           <tr key={log.id}>
-                            <td style={{ fontWeight: '500' }}>{log.student}</td>
+                            <td style={{ fontWeight: '500' }}>{students.find(s => s.username === log.student)?.name || log.student}</td>
                             <td>{log.roll_no}</td>
                             <td style={{ fontWeight: '600', color: 
                               log.predicted_label === 'excellent' ? 'var(--std-success)' :
@@ -1079,6 +1144,75 @@ export default function AdminDashboard({ onLogout }) {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* TIMETABLE TAB */}
+          {/* ============================================================ */}
+          {activeTab === 'timetable' && (
+            <div className="std-dashboard-section animate-fade-in">
+              <div className="std-card" style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '18px', color: 'var(--std-text-primary)', marginBottom: '16px' }}>Upload Weekly Timetable</h3>
+                <p style={{ color: 'var(--std-text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
+                  Upload a photo or PDF of the latest weekly timetable. This will be visible to all students and faculty on their dashboards.
+                </p>
+                <form onSubmit={handleUploadTimetable} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <input 
+                    type="file" 
+                    name="timetableFile" 
+                    accept="image/*,.pdf" 
+                    required 
+                    style={{ 
+                      padding: '10px', 
+                      border: '1px solid var(--std-border)', 
+                      borderRadius: '8px',
+                      flex: 1
+                    }}
+                  />
+                  <button 
+                    type="submit" 
+                    className="action-btn-primary" 
+                    disabled={timetableLoading}
+                  >
+                    {timetableLoading ? 'Uploading...' : 'Upload Timetable'}
+                  </button>
+                </form>
+              </div>
+
+              <div className="std-card">
+                <h3 style={{ fontSize: '18px', color: 'var(--std-text-primary)', marginBottom: '16px' }}>Current Timetable</h3>
+                {timetableImage ? (
+                  <div style={{ textAlign: 'center', border: '1px solid var(--std-border)', padding: '10px', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+                    <div style={{ marginBottom: '10px', textAlign: 'right' }}>
+                      <a 
+                        href={timetableImage} 
+                        download="Weekly_Timetable" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-block', padding: '8px 16px', backgroundColor: 'var(--std-primary)', color: 'white', textDecoration: 'none', borderRadius: '4px', fontSize: '14px', fontWeight: 'bold' }}
+                      >
+                        ⬇ Download Timetable
+                      </a>
+                    </div>
+                    {timetableImage.toLowerCase().endsWith('.pdf') ? (
+                      <object data={timetableImage} type="application/pdf" width="100%" height="700px">
+                        <p>Your browser does not support PDFs. <a href={timetableImage} target="_blank" rel="noopener noreferrer">Download the PDF</a>.</p>
+                      </object>
+                    ) : (
+                      <img 
+                        src={timetableImage} 
+                        alt="Weekly Timetable" 
+                        style={{ maxWidth: '100%', maxHeight: '700px', objectFit: 'contain', borderRadius: '4px' }}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--std-text-secondary)', border: '1px dashed var(--std-border)', borderRadius: '8px' }}>
+                    <p style={{ margin: 0, fontSize: '15px' }}>No timetable uploaded yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

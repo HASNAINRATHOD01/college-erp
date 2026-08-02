@@ -98,3 +98,18 @@ class Timetable(models.Model):
             f"{self.department} | Sem {self.semester} | "
             f"{self.day} {self.time_slot} | {self.subject} ({faculty_name})"
         )
+
+class TimetableImage(models.Model):
+    image = models.FileField(upload_to='timetables/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        'users.User', 
+        on_delete=models.SET_NULL, 
+        null=True
+    )
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"Timetable uploaded on {self.uploaded_at}"

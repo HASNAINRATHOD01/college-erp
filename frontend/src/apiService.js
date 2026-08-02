@@ -132,6 +132,28 @@ class ApiService {
     return this.request(`/api/timetable/${query ? `?${query}` : ''}`);
   }
 
+  static async uploadTimetableImage(formData) {
+    const token = localStorage.getItem('cms_access_token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch('/api/timetable/upload-image/', {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.detail || data.message || 'Image upload failed');
+    }
+    return response.json();
+  }
+
+  static async getLatestTimetableImage() {
+    return this.request('/api/timetable/latest-image/');
+  }
+
   static async createTimetableSlot(payload) {
     return this.request('/api/timetable/', {
       method: 'POST',

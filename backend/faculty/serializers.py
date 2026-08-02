@@ -51,6 +51,8 @@ class FacultyCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)
     email    = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=8)
+    first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model  = Faculty
@@ -59,6 +61,8 @@ class FacultyCreateSerializer(serializers.ModelSerializer):
             'username',
             'email',
             'password',
+            'first_name',
+            'last_name',
             # Faculty profile fields
             'employee_id',
             'department',
@@ -78,9 +82,11 @@ class FacultyCreateSerializer(serializers.ModelSerializer):
         username = validated_data.pop('username')
         email    = validated_data.pop('email')
         password = validated_data.pop('password')
+        first_name = validated_data.pop('first_name', '')
+        last_name  = validated_data.pop('last_name', '')
 
         # --- Step 2: Create the User with role FACULTY ---
-        user = User(username=username, email=email, role=User.Role.FACULTY)
+        user = User(username=username, email=email, first_name=first_name, last_name=last_name, role=User.Role.FACULTY)
         user.set_password(password)   # hashes the password before saving
         user.save()
 

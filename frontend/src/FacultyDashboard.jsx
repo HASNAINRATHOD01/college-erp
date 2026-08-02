@@ -78,6 +78,9 @@ export default function FacultyDashboard({ user, onLogout }) {
   const [predicting, setPredicting] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
   const [predictionHistory, setPredictionHistory] = useState([]);
+  
+  // --- Timetable State ---
+  const [timetableImage, setTimetableImage] = useState(null);
 
   const activeFacultyProfile = {
     id: user?.id || 'F000',
@@ -91,6 +94,15 @@ export default function FacultyDashboard({ user, onLogout }) {
     try {
       const apiStudents = await ApiService.getStudents();
       const apiAssignments = await ApiService.getAssignments();
+      
+      try {
+        const apiTimetable = await ApiService.getLatestTimetableImage();
+        if (apiTimetable && apiTimetable.image) {
+          setTimetableImage(apiTimetable.image);
+        }
+      } catch (e) {
+        console.log('Timetable not found:', e);
+      }
 
       const mappedStudents = apiStudents.map(s => ({
         id: String(s.id),
@@ -555,6 +567,16 @@ export default function FacultyDashboard({ user, onLogout }) {
 
           <button 
             type="button" 
+            className={`fac-nav-item ${activeTab === 'timetable' ? 'active' : ''}`}
+            onClick={() => setActiveTab('timetable')}
+            title="Weekly Timetable"
+          >
+            <div style={{ fontSize: '18px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📅</div>
+            {!collapsed && <span className="fac-nav-label">Weekly Timetable</span>}
+          </button>
+
+          <button 
+            type="button" 
             className={`fac-nav-item ${activeTab === 'library' ? 'active' : ''}`}
             onClick={() => setActiveTab('library')}
             title="Campuzz Libre"
@@ -593,6 +615,7 @@ export default function FacultyDashboard({ user, onLogout }) {
               {activeTab === 'students' && 'Student Directory & Performance Log'}
               {activeTab === 'assignments' && 'Assignment Coursework Control'}
               {activeTab === 'ai-predictor' && 'AI Performance Risk Analysis'}
+              {activeTab === 'timetable' && 'Weekly Timetable Schedule'}
               {activeTab === 'library' && 'Campuzz Libre Engineering Shelf'}
               {activeTab === 'cloud' && 'Cloud Sync Integration Module'}
             </h1>
@@ -1145,6 +1168,48 @@ export default function FacultyDashboard({ user, onLogout }) {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* TIMETABLE TAB */}
+          {/* ============================================================ */}
+          {activeTab === 'timetable' && (
+            <div className="fac-dashboard-section animate-fade-in">
+              <div className="fac-card">
+                <h3>Weekly Academic Class Timetable</h3>
+                {timetableImage ? (
+                  <div style={{ textAlign: 'center', border: '1px solid var(--fac-cardborder)', padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.02)', marginTop: '20px' }}>
+                    <div style={{ marginBottom: '10px', textAlign: 'right' }}>
+                      <a 
+                        href={timetableImage} 
+                        download="Weekly_Timetable" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-block', padding: '8px 16px', backgroundColor: 'var(--fac-primary)', color: 'white', textDecoration: 'none', borderRadius: '4px', fontSize: '14px', fontWeight: 'bold' }}
+                      >
+                        ⬇ Download Timetable
+                      </a>
+                    </div>
+                    {timetableImage.toLowerCase().endsWith('.pdf') ? (
+                      <object data={timetableImage} type="application/pdf" width="100%" height="800px">
+                        <p>Your browser does not support PDFs. <a href={timetableImage} target="_blank" rel="noopener noreferrer">Download the PDF</a>.</p>
+                      </object>
+                    ) : (
+                      <img 
+                        src={timetableImage} 
+                        alt="Weekly Timetable" 
+                        style={{ maxWidth: '100%', maxHeight: '800px', objectFit: 'contain', borderRadius: '4px' }}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--fac-text-secondary)', border: '1px dashed var(--fac-cardborder)', borderRadius: '8px', marginTop: '20px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                    <p style={{ margin: 0, fontSize: '16px' }}>No weekly timetable has been uploaded yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

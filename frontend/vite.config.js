@@ -182,6 +182,10 @@ export default defineConfig(({ mode }) => {
               return req.url;
             }
           }
+        },
+        '/media': {
+          target: 'http://localhost:8000',
+          changeOrigin: true
         }
       }
     }

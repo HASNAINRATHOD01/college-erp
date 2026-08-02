@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Timetable
+from .models import Timetable, TimetableImage
 
 
 class TimetableSerializer(serializers.ModelSerializer):
@@ -36,3 +36,9 @@ class TimetableSerializer(serializers.ModelSerializer):
             'faculty_name',  # read-only convenience field
             'room',
         ]
+
+class TimetableImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimetableImage
+        fields = ['id', 'image', 'uploaded_at', 'uploaded_by']
+        read_only_fields = ['uploaded_at', 'uploaded_by']

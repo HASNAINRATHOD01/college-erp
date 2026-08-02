@@ -1,7 +1,11 @@
 from rest_framework import viewsets, permissions
 from users.permissions import IsAdmin
-from .models import Timetable
-from .serializers import TimetableSerializer
+from .serializers import TimetableSerializer, TimetableImageSerializer
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Timetable, TimetableImage
 
 
 class TimetableViewSet(viewsets.ModelViewSet):
@@ -84,3 +88,22 @@ class TimetableViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(subject__icontains=subject)
 
         return queryset
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])
+@parser_classes([MultiPartParser, FormParser])
+def upload_timetable_image(request):
+    serializer = TimetableImageSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        serializer.save(uploaded_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_latest_timetable_image(request):
+    latest_image = TimetableImage.objects.first()
+    if latest_image:
+        serializer = TimetableImageSerializer(latest_image, context={'request': request})
+        return Response(serializer.data)
+    return Response({'detail': 'No timetable image found.'}, status=status.HTTP_404_NOT_FOUND)

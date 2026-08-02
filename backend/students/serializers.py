@@ -30,17 +30,21 @@ class StudentCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=8)
+    first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = Student
-        fields = ['username', 'email', 'password', 'roll_no', 'course', 'semester', 'department', 'admission_year']
+        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'roll_no', 'course', 'semester', 'department', 'admission_year']
 
     def create(self, validated_data):
         username = validated_data.pop('username')
         email = validated_data.pop('email')
         password = validated_data.pop('password')
+        first_name = validated_data.pop('first_name', '')
+        last_name  = validated_data.pop('last_name', '')
 
-        user = User(username=username, email=email, role=User.Role.STUDENT)
+        user = User(username=username, email=email, first_name=first_name, last_name=last_name, role=User.Role.STUDENT)
         user.set_password(password)
         user.save()
 

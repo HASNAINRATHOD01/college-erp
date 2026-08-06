@@ -1348,7 +1348,7 @@ export default function AdminDashboard({ user, onLogout }) {
                       ) : (
                         predictionHistory.map(log => (
                           <tr key={log.id}>
-                            <td style={{ fontWeight: '500' }}>{students.find(s => s.username === log.student)?.name || log.student}</td>
+                            <td style={{ fontWeight: '500' }}>{students.find(s => String(s.username) === String(log.student) || String(s.roll_no) === String(log.student) || String(s.id) === String(log.student))?.name || log.student}</td>
                             <td>{log.roll_no}</td>
                             <td style={{ fontWeight: '600', color: 
                               log.predicted_label === 'excellent' ? 'var(--std-success)' :

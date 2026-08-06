@@ -799,7 +799,8 @@ export default function FacultyDashboard({ user, onLogout }) {
                     <div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                         {deptStudents.map(student => {
-                          const rollNum = student.roll_no || student.username || student.id;
+                          const rawRoll = String(student.username || student.roll_no || student.id);
+                          const rollNum = rawRoll.length > 8 ? rawRoll.slice(-3) : rawRoll;
                           const isPresent = attendanceToggles[student.id] !== false;
                           return (
                             <div
@@ -862,7 +863,7 @@ export default function FacultyDashboard({ user, onLogout }) {
                   <input 
                     type="text" 
                     className="fac-input"
-                    placeholder="Search name or enrollment..."
+                    placeholder="Search name or roll number..."
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
                   />

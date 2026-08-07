@@ -1,4 +1,4 @@
-const BASE_URL = ''; // Relative path, Vite proxy forwards to Django server (localhost:8000)
+const BASE_URL = 'https://college-erp-61lc.onrender.com';// Relative path, Vite proxy forwards to Django server (localhost:8000)
 
 class ApiService {
   static getHeaders() {

@@ -1,0 +1,9 @@
+roll_no,subject,date,status
+CS-001,DBMS,2024-08-01,present
+CS-002,DBMS,2024-08-01,absent
+CS-003,DBMS,2024-08-01,present
+CS-001,Operating Systems,2024-08-01,present
+CS-002,Operating Systems,2024-08-01,present
+CS-003,Operating Systems,2024-08-01,absent
+CS-001,DBMS,2024-08-02,absent
+CS-002,DBMS,2024-08-02,present

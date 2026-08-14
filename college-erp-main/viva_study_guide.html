@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>College ERP & AI Performance Risk Predictor — Viva Defense Guide</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 9pt;
+      color: #64748b;
+    }
+    @bottom-left {
+      content: "Campuzz ERP — Technical Defense Reference";
+      font-size: 9pt;
+      color: #64748b;
+    }
+  }
+  
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .title-page {
+    page-break-after: always;
+    text-align: center;
+    padding-top: 60px;
+  }
+  
+  .logo-box {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    border-radius: 20px;
+    margin: 0 auto 20px auto;
+    line-height: 80px;
+    color: #ffffff;
+    font-size: 36pt;
+    font-weight: bold;
+  }
+  
+  h1 {
+    font-size: 26pt;
+    color: #0f172a;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+  
+  .subtitle {
+    font-size: 14pt;
+    color: #0284c7;
+    font-weight: 600;
+    margin-bottom: 40px;
+  }
+  
+  .meta-card {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  
+  .meta-item {
+    margin-bottom: 12px;
+    font-size: 11pt;
+  }
+  .meta-item strong {
+    color: #334155;
+    width: 140px;
+    display: inline-block;
+  }
+  
+  h2 {
+    font-size: 16pt;
+    color: #0f172a;
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 6px;
+    margin-top: 30px;
+    page-break-after: avoid;
+  }
+  
+  h3 {
+    font-size: 13pt;
+    color: #0284c7;
+    margin-top: 20px;
+    page-break-after: avoid;
+  }
+
+  h4 {
+    font-size: 11pt;
+    color: #334155;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  
+  p, li {
+    text-align: justify;
+  }
+
+  code {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f1f5f9;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 9.5pt;
+    color: #0f172a;
+  }
+
+  pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 14px;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    white-space: pre-wrap;
+  }
+
+  pre .keyword { color: #38bdf8; font-weight: bold; }
+  pre .string { color: #4ade80; }
+  pre .comment { color: #94a3b8; font-style: italic; }
+  pre .func { color: #facc15; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+
+  th {
+    background-color: #0f172a;
+    color: #ffffff;
+    text-align: left;
+    padding: 10px;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+
+  .alert-box {
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin: 16px 0;
+    font-size: 10pt;
+  }
+
+  .qa-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: bold;
+    color: #0284c7;
+    font-size: 11pt;
+    margin-bottom: 6px;
+  }
+
+  .qa-a {
+    color: #334155;
+    font-size: 10pt;
+  }
+
+  .code-link {
+    font-size: 9pt;
+    color: #64748b;
+    font-style: italic;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE PAGE -->
+<div class="title-page">
+  <div class="logo-box">🎓</div>
+  <h1>CAMPUZZ ERP & AI PREDICTOR</h1>
+  <div class="subtitle">Complete Technical Defense & Comprehensive Viva Study Guide</div>
+  
+  <div class="meta-card">
+    <div class="meta-item"><strong>Project Name:</strong> Campuzz LJ Engineering ERP</div>
+    <div class="meta-item"><strong>Architecture:</strong> Django REST + React + Scikit-Learn</div>
+    <div class="meta-item"><strong>ML Engine:</strong> Random Forest Classifier</div>
+    <div class="meta-item"><strong>Target Platform:</strong> Full-Stack Academic Management</div>
+    <div class="meta-item"><strong>Target Role:</strong> Senior Full-Stack Architect Defense</div>
+    <div class="meta-item"><strong>Document Version:</strong> 4.2 (Production Release)</div>
+  </div>
+</div>
+
+<!-- SECTION 1 -->
+<h2>SECTION 1: EXECUTIVE SUMMARY & SYSTEM ARCHITECTURE</h2>
+
+<h3>1.1 High-Level Purpose</h3>
+<p>
+  <strong>Campuzz ERP</strong> is an enterprise academic management and intelligence web platform designed for higher education institutions (e.g., LJ University). It bridges administrative operations, faculty grading, daily attendance logging, and student self-service into a unified, secure system.
+</p>
+<p>
+  <strong>Core Problem Solved:</strong> Eliminates fragmented manual record-keeping, isolated grading sheets, and delayed academic interventions. It integrates an automated <em>Machine Learning Performance Risk Predictor</em> that analyzes real-time attendance and assessment records to predict student failure risk early in the academic semester.
+</p>
+
+<h3>1.2 Complete Tech Stack Inventory</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Technologies / Libraries</th>
+      <th>Key Function in Codebase</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Backend Core</strong></td>
+      <td>Python 3.12, Django 6.0, Django REST Framework 3.17</td>
+      <td>RESTful API endpoints, ORM data modelling, database transactions, role-based access logic.</td>
+    </tr>
+    <tr>
+      <td><strong>Authentication & Security</strong></td>
+      <td><code>djangorestframework_simplejwt</code>, <code>PyJWT</code>, CORS Headers</td>
+      <td>Stateless JSON Web Token (JWT) authentication, 7-day token lifetime, custom RBAC permissions.</td>
+    </tr>
+    <tr>
+      <td><strong>Machine Learning & Data Science</strong></td>
+      <td>Scikit-Learn 1.9, Pandas 3.0, NumPy 2.5, Joblib 1.5</td>
+      <td>Random Forest model training, feature vector extraction, classification inference, model serialization.</td>
+    </tr>
+    <tr>
+      <td><strong>Frontend UI Framework</strong></td>
+      <td>React 19, Vite 8.1, Vanilla CSS Modern Tokens</td>
+      <td>Single Page Application (SPA), role-specific portals (Admin, Faculty, Student), glassmorphism design.</td>
+    </tr>
+    <tr>
+      <td><strong>Server-Side Integrations</strong></td>
+      <td>Nodemailer 9.0 (Vite middleware HTTP gateway)</td>
+      <td>Direct background SMTP notification dispatch to <code>akshatthoriya1@gmail.com</code> using App Passwords.</td>
+    </tr>
+    <tr>
+      <td><strong>Database & Storage</strong></td>
+      <td>SQLite 3 (Django ORM), HTML5 LocalStorage</td>
+      <td>Relational persistent data storage, local component state caching (marks, roll mapping).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>1.3 End-to-End Data Flow Architecture</h3>
+<p>
+  When an Admin runs an AI Performance Risk Assessment for a student:
+</p>
+<ol>
+  <li><strong>Client Trigger:</strong> User clicks <code>Run Analysis</code> in <code>AdminDashboard.jsx</code>.</li>
+  <li><strong>HTTP Dispatch:</strong> Sends <code>POST /api/predict/</code> with payload <code>{"student_id": 14}</code> carrying <code>Bearer &lt;JWT_TOKEN&gt;</code> header.</li>
+  <li><strong>Auth & RBAC:</strong> Django's <code>IsAuthenticated</code> middleware validates JWT signature and verifies user role.</li>
+  <li><strong>Feature Extraction:</strong> <code>predictions/views.py</code> queries ORM to fetch marks and daily attendance for student #14, computing a 5-dimensional feature vector: <code>[avg_percentage, attendance_pct, fail_count, top_grade_count, total_exams]</code>.</li>
+  <li><strong>ML Inference:</strong> The pre-loaded Random Forest model (<code>rf_model.pkl</code>) executes <code>.predict(X)</code> and <code>.predict_proba(X)</code>.</li>
+  <li><strong>Logging & Response:</strong> Result saved to <code>PredictionLog</code> table and returned as JSON response to frontend.</li>
+</ol>
+
+<!-- SECTION 2 -->
+<h2>SECTION 2: DEEP DIVE INTO DJANGO ARCHITECTURE</h2>
+
+<h3>2.1 Directory Structure Breakdown</h3>
+<ul>
+  <li><code>backend/erp_backend/</code> — Django root project configuration (<code>settings.py</code>, master <code>urls.py</code>, WSGI/ASGI entrypoints).</li>
+  <li><code>backend/users/</code> — Custom User model (<code>AbstractUser</code>) handling roles (<code>ADMIN</code>, <code>FACULTY</code>, <code>STUDENT</code>) and JWT auth serializers.</li>
+  <li><code>backend/students/</code> — Student profile model, departmental course/semester attributes, and student API ViewSet.</li>
+  <li><code>backend/faculty/</code> — Faculty profile model, teacher-class assignments, and faculty self-service endpoints.</li>
+  <li><code>backend/attendance/</code> — Daily attendance logging model, update-or-create logic, and CSV bulk upload parser.</li>
+  <li><code>backend/marks/</code> — Internal assessment score models (T1 to T4 marks per subject), auto grade computation (O, A+, B, F).</li>
+  <li><code>backend/predictions/</code> — ML pipeline directory containing <code>train_model.py</code>, trained binaries (<code>rf_model.pkl</code>), and prediction API views.</li>
+</ul>
+
+<h3>2.2 Database Schema & Relationships</h3>
+<p>
+  The database uses standard Relational Mapping via Django ORM:
+</p>
+<ul>
+  <li><strong>User ↔ Student / Faculty:</strong> One-To-One Relationship (<code>OneToOneField(User, on_delete=CASCADE)</code>).</li>
+  <li><strong>Student ↔ Attendance:</strong> One-To-Many (ForeignKey on <code>Attendance.student</code>). Unique constraint on <code>(student, subject, date)</code>.</li>
+  <li><strong>Student ↔ Mark:</strong> One-To-Many (ForeignKey on <code>Mark.student</code>). Unique constraint on <code>(student, subject, exam_type)</code>.</li>
+  <li><strong>Faculty ↔ TeacherClassAssignment:</strong> One-To-Many mapping faculty to course & semester divisions (D1 to D7).</li>
+</ul>
+
+<h3>2.3 Critical Code Snippet Line-by-Line Explanation</h3>
+<h4>1. Attendance Upsert Controller</h4>
+<div class="code-link">File: backend/attendance/views.py (Lines 185-196)</div>
+<pre>
+<span class="comment"># Performs atomic update_or_create to prevent SQLite database lock and constraint duplication</span>
+<span class="func">obj</span>, created = Attendance.objects.update_or_create(
+    student=student,
+    subject=subject,
+    date=date,
+    defaults={
+        <span class="string">'status'</span>: status_val,
+        <span class="string">'marked_by'</span>: faculty_profile
+    }
+)
+<span class="keyword">return</span> Response(serializer.data, status=status.HTTP_201_CREATED <span class="keyword">if</span> created <span class="keyword">else</span> status.HTTP_200_OK)
+</pre>
+<p>
+  <strong>Explanation:</strong> This prevents duplicate attendance records for the same student on the same day. If a entry exists for <code>(student, subject, date)</code>, Django executes an <code>UPDATE</code>; otherwise, it executes an <code>INSERT</code>.
+</p>
+
+<!-- SECTION 3 -->
+<h2>SECTION 3: DEEP DIVE INTO NODE.JS & INTEGRATIONS</h2>
+
+<h3>3.1 Role of Node.js / Vite Server Middleware</h3>
+<p>
+  In this application, Node.js powers the Vite Development Server and acts as an asynchronous API Gateway for background tasks that should not block the main Django Python thread (such as sending SMTP emails via Nodemailer).
+</p>
+
+<h3>3.2 Direct Gmail Nodemailer Middleware</h3>
+<div class="code-link">File: frontend/vite.config.js (Lines 57-82)</div>
+<pre>
+<span class="comment">// Direct Gmail Transporter using Node.js Nodemailer and Google App Password</span>
+<span class="keyword">const</span> transporter = nodemailer.createTransport({
+  service: <span class="string">'gmail'</span>,
+  auth: {
+    user: <span class="string">'akshatthoriya1@gmail.com'</span>,
+    pass: <span class="string">'helwquxwjpfkhgzt'</span>
+  }
+});
+
+<span class="keyword">const</span> mailOptions = {
+  from: <span class="string">'akshatthoriya1@gmail.com'</span>,
+  to: <span class="string">'akshatthoriya1@gmail.com'</span>,
+  subject: subject || <span class="string">'Campuzz Academic Notice Alert'</span>,
+  text: text,
+  html: <span class="string">`&lt;div style="padding:20px;"&gt;&lt;h2&gt;${subject}&lt;/h2&gt;&lt;p&gt;${text}&lt;/p&gt;&lt;/div&gt;`</span>
+};
+
+<span class="keyword">const</span> info = <span class="keyword">await</span> transporter.sendMail(mailOptions);
+console.log(<span class="string">`[Email] ✅ EMAIL SENT DIRECTLY TO GMAIL INBOX! ID: ${info.messageId}`</span>);
+</pre>
+<p>
+  <strong>Explanation:</strong> When a user submits an email notice, the React frontend fires an HTTP POST request to <code>/api/send-email</code>. Node.js intercepts the endpoint in Vite dev server middleware, initializes an SMTP connection to <code>smtp.gmail.com:465</code> using Google App Password <code>helwquxwjpfkhgzt</code>, and sends the HTML formatted email asynchronously.
+</p>
+
+<!-- SECTION 4 -->
+<h2>SECTION 4: MACHINE LEARNING & DATA SCIENCE MODEL EXPLANATION</h2>
+
+<h3>4.1 Dataset & Feature Engineering Pipeline</h3>
+<p>
+  The AI Model predicts student risk levels by engineering 5 numerical features from database tables:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Feature Name</th>
+      <th>Data Source</th>
+      <th>Formula / Logic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>avg_percentage</code></td>
+      <td><code>marks_mark</code> table</td>
+      <td>Mean of <code>(marks_obtained / max_marks) * 100</code> across all recorded subjects.</td>
+    </tr>
+    <tr>
+      <td><code>attendance_pct</code></td>
+      <td><code>attendance_attendance</code> table</td>
+      <td><code>(total_present_days / total_conducted_classes) * 100</code>.</td>
+    </tr>
+    <tr>
+      <td><code>fail_count</code></td>
+      <td><code>marks_mark</code> table</td>
+      <td>Count of subject exams where percentage &lt; 40%.</td>
+    </tr>
+    <tr>
+      <td><code>top_grade_count</code></td>
+      <td><code>marks_mark</code> table</td>
+      <td>Count of subjects where grade is 'O' or 'A+'.</td>
+    </tr>
+    <tr>
+      <td><code>total_exams</code></td>
+      <td><code>marks_mark</code> table</td>
+      <td>Total count of exam attempts recorded.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2 Why Random Forest Classifier?</h3>
+<ul>
+  <li><strong>Non-Linear Relationships:</strong> Academic failure is non-linear (e.g., high marks but 30% attendance still places a student at critical risk). Random Forest handles non-linear decision boundaries effectively.</li>
+  <li><strong>Overfitting Resistance:</strong> By ensemble averaging 100 decision trees (<code>n_estimators=100</code>) trained on random bootstrap samples with <code>max_depth=6</code>, it prevents individual tree overfitting.</li>
+  <li><strong>Imbalanced Data Handling:</strong> Configured with <code>class_weight='balanced'</code> to automatically adjust weights inversely proportional to class frequencies.</li>
+</ul>
+
+<h3>4.3 Model Serialization Code</h3>
+<div class="code-link">File: backend/predictions/train_model.py (Lines 172-196)</div>
+<pre>
+<span class="keyword">from</span> sklearn.ensemble <span class="keyword">import</span> RandomForestClassifier
+<span class="keyword">import</span> joblib
+
+model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=6,
+    random_state=42,
+    class_weight=<span class="string">'balanced'</span>
+)
+model.fit(X_train, y_train)
+
+<span class="comment"># Serialize trained model and feature schema to disk</span>
+joblib.dump(model, <span class="string">'predictions/ml_model/rf_model.pkl'</span>)
+joblib.dump(FEATURE_COLS, <span class="string">'predictions/ml_model/features.pkl'</span>)
+</pre>
+
+<!-- SECTION 5 -->
+<h2>SECTION 5: LIBRARIES & DEPENDENCIES DICTIONARY</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Package Name</th>
+      <th>Version</th>
+      <th>Role in Project</th>
+      <th>Key Function Used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Django</code></td>
+      <td>6.0.6</td>
+      <td>Core Backend Web Framework</td>
+      <td><code>models.Model</code>, <code>django.setup()</code></td>
+    </tr>
+    <tr>
+      <td><code>djangorestframework</code></td>
+      <td>3.17.1</td>
+      <td>RESTful API Serializers & ViewSets</td>
+      <td><code>viewsets.ModelViewSet</code>, <code>@api_view</code></td>
+    </tr>
+    <tr>
+      <td><code>djangorestframework_simplejwt</code></td>
+      <td>5.5.1</td>
+      <td>JWT Authentication</td>
+      <td><code>TokenObtainPairView</code>, <code>jwt_payload_handler</code></td>
+    </tr>
+    <tr>
+      <td><code>scikit-learn</code></td>
+      <td>1.9.0</td>
+      <td>Machine Learning Modeling</td>
+      <td><code>RandomForestClassifier.predict_proba()</code></td>
+    </tr>
+    <tr>
+      <td><code>pandas</code></td>
+      <td>3.0.3</td>
+      <td>Data Tabulation & Bulk CSV Parse</td>
+      <td><code>pd.read_csv()</code>, <code>df.iterrows()</code></td>
+    </tr>
+    <tr>
+      <td><code>numpy</code></td>
+      <td>2.5.1</td>
+      <td>Numerical Computation</td>
+      <td><code>np.mean()</code>, <code>np.array()</code></td>
+    </tr>
+    <tr>
+      <td><code>joblib</code></td>
+      <td>1.5.3</td>
+      <td>Model Binary Serialization</td>
+      <td><code>joblib.dump()</code>, <code>joblib.load()</code></td>
+    </tr>
+    <tr>
+      <td><code>nodemailer</code></td>
+      <td>9.0.3</td>
+      <td>Node.js Background Email SMTP</td>
+      <td><code>transporter.sendMail()</code></td>
+    </tr>
+    <tr>
+      <td><code>react</code></td>
+      <td>19.2.7</td>
+      <td>Frontend UI Component Library</td>
+      <td><code>useState()</code>, <code>useEffect()</code></td>
+    </tr>
+    <tr>
+      <td><code>vite</code></td>
+      <td>8.1.1</td>
+      <td>Frontend Build Tool & Dev Gateway</td>
+      <td><code>vite build</code>, custom middleware dev server</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 6 -->
+<h2>SECTION 6: ULTIMATE VIVA QUESTION & ANSWER BANK</h2>
+
+<div class="qa-card">
+  <div class="qa-q">Q1: Why did you choose a decoupled architecture with Django REST Framework and React instead of traditional Django HTML Templates?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> A decoupled architecture separates concerns cleanly. Django serves exclusively as a stateless headless REST API handling business logic, database ORM, and ML model inference. React handles client-side rendering (SPA), resulting in sub-millisecond tab switching, lower server bandwidth consumption, and the ability to reuse the same backend APIs for future mobile apps (iOS/Android).
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q2: How does your application prevent the N+1 query problem when listing students with their associated user data?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> We use Django's <code>select_related('user')</code> in our queryset definitions (e.g., <code>Student.objects.select_related('user').all()</code>). This forces Django ORM to execute an SQL <code>INNER JOIN</code> between the <code>students_student</code> and <code>users_user</code> tables in a single database query, instead of firing 1 query for the list plus N queries for each user record.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q3: How does your AI model avoid data leakage during feature extraction and model training?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> Data leakage is prevented by strict temporal and conceptual separation. Features such as <code>avg_percentage</code> and <code>attendance_pct</code> are calculated strictly from past historic database entries up to the current date. During training in <code>train_model.py</code>, <code>train_test_split</code> with <code>stratify=y</code> is executed before any model fitting, ensuring test set samples never influence model weights or feature scaling.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q4: Explain how JWT Authentication works in your system and how token expiration is configured.</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> Authentication uses <code>djangorestframework_simplejwt</code>. Upon login (<code>POST /api/token/</code>), the backend verifies credentials and returns a signed <code>access</code> and <code>refresh</code> JWT token. In <code>settings.py</code>, we configured <code>ACCESS_TOKEN_LIFETIME = timedelta(days=7)</code> to ensure multi-day session persistence. Every request sends <code>Authorization: Bearer &lt;token&gt;</code> in headers, which Django verifies statelessly without hitting the session database.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q5: How do you handle race conditions or database locks when multiple faculty members mark attendance simultaneously?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> Attendance logging in <code>AttendanceViewSet.create()</code> uses atomic <code>update_or_create()</code> queries with explicit unique constraints on <code>(student, subject, date)</code>. Sequential request handling on the client prevents SQLite table lock errors, and unique composite indexes at the DB layer reject duplicate insertion attempts at the engine level.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q6: What measures were taken to handle imbalanced target classes in your machine learning dataset?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> In academic datasets, 'at_risk' or 'excellent' students are naturally rarer than 'average' students. We handled this by setting <code>class_weight='balanced'</code> inside <code>RandomForestClassifier</code>. This automatically computes weights inversely proportional to class frequencies as <code>n_samples / (n_classes * np.bincount(y))</code>, giving higher penalties to misclassifications of minority classes.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q7: Explain the line-by-line role of Nodemailer in your application's notification architecture.</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> Nodemailer is embedded inside Vite's Node.js development server middleware in <code>vite.config.js</code>. When an Admin or Faculty dispatches a notice, frontend executes an HTTP POST to <code>/api/send-email</code>. Node.js intercepts this, instantiates a Nodemailer <code>createTransport</code> targeting Gmail SMTP (<code>smtp.gmail.com</code>), injects the Google App Password, and calls <code>transporter.sendMail()</code> to deliver the message asynchronously under the hood.
+  </div>
+</div>
+
+<div class="qa-card">
+  <div class="qa-q">Q8: What is the computational complexity of running your Random Forest inference per student request?</div>
+  <div class="qa-a">
+    <strong>Answer:</strong> The inference time complexity is <code>O(M × D)</code>, where <code>M</code> is the number of decision trees (100) and <code>D</code> is the maximum tree depth (6). Since <code>M=100</code> and <code>D=6</code> are fixed constants, inference runs in <code>O(1)</code> constant time (approx. 2 to 5 milliseconds per request), making real-time prediction lightweight and scalable.
+  </div>
+</div>
+
+</body>
+</html>

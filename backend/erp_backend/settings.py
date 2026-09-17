@@ -2,16 +2,34 @@
 Django settings for erp_backend project.
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-9cgelogq-f1i99cpk*+u2-rj87_-cpze!3+me8z@h=ztd9_r(('
+# SECURITY WARNING: keep the secret key used in production secret!
+# Set SECRET_KEY as an environment variable on Render/Railway.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-9cgelogq-f1i99cpk*+u2-rj87_-cpze!3+me8z@h=ztd9_r(('
+)
 
-DEBUG = True
+# Set DEBUG=True only in your local .env file. Leave it False (or unset) in production.
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+# Set ALLOWED_HOSTS as a comma-separated env var in production, e.g.:
+# ALLOWED_HOSTS=your-app.onrender.com,yourdomain.com
+ALLOWED_HOSTS = (
+    os.environ.get('ALLOWED_HOSTS', '').split(',')
+    if os.environ.get('ALLOWED_HOSTS')
+    else []
+)
 
 
 # Application definition
@@ -72,12 +90,14 @@ WSGI_APPLICATION = 'erp_backend.wsgi.application'
 
 
 # Database
+# Uses DATABASE_URL env var when present (Postgres on Render/Railway).
+# Falls back to local SQLite when DATABASE_URL is not set (local dev).
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
@@ -144,8 +164,14 @@ SIMPLE_JWT = {
 }
 
 
-# CORS (development — allow all origins)
+# CORS
+# In production, set CORS_ALLOWED_ORIGINS as a comma-separated env var, e.g.:
+# CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
+# Locally (no env var set), falls back to allowing all origins for convenience.
 
-CORS_ALLOW_ALL_ORIGINS = True
+if os.environ.get('CORS_ALLOWED_ORIGINS'):
+    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS').split(',')
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
